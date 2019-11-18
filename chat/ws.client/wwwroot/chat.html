@@ -187,28 +187,28 @@
             
         }
         function sendMessage(sender, recipient, group, messageText) {
-            data.websocket.send({
+            data.websocket.send(JSON.stringify({
                 recipient: recipient,
                 private: recipient != null,
                 group: group,
                 text: messageText
-            });
+            }));
         }
         function addGroup(sender, recipient, connectionId, group) {
-            data.websocket.send({
+            data.websocket.send(JSON.stringify({
                 action: "add",
                 connectionId: connectionId,
                 recipient: recipient,
                 group: group
-            });
+            }));
         }
         function removeGroup(sender, recipient, connectionId, group) {
-            data.websocket.send({
+            data.websocket.send(JSON.stringify({
                 action: "remove",
                 connectionId: connectionId,
                 recipient: recipient,
                 group: group
-            });
+            }));
         }
         let counter = 0;
         function newMessage(message) {

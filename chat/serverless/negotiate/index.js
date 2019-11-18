@@ -36,7 +36,7 @@ var func = module.exports = async function (context, req) {
     }
 };
 
-
+// for local test
 var context = {
     res : {body: ""}
 };
