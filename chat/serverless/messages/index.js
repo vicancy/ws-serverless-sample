@@ -1,4 +1,3 @@
-var api = require('./api');
 
 var func = module.exports = async function (context, req) {
     context.log('JavaScript HTTP trigger function processed a request.');
@@ -14,7 +13,10 @@ var func = module.exports = async function (context, req) {
     if (event === "connect") {
         // do auth?
         context.res = {
-            body: user + "(" + connectionId + ") logged in."
+            body: {
+                type: 'alert',
+                text: user + "(" + connectionId + ") logged in."
+            }
         }
 
     } else if (event === "disconnect") {
@@ -23,6 +25,7 @@ var func = module.exports = async function (context, req) {
         // clean up
     } else if (event == "message") {
         if (req.body) {
+            var api = require('./api')(user);
             var response = '';
             var message = req.body;
             const recipient = message.recipient || user;
@@ -31,36 +34,46 @@ var func = module.exports = async function (context, req) {
                     if (message.action === "add") {
                         response = await api.addToGroup(recipient, message.group);
                     } else if (message.action === "remove") {
-                        response = api.removeFromGroup(recipient, message.group);
+                        response = await api.removeFromGroup(recipient, message.group);
                     }
                 } else {
-                    response = api.sendToGroup(message.group, message.text);
+                    response = await api.sendToGroup(message.group, message.text);
                 }
             } else {
                 if (message.action) {
                     if (message.action === "broadcast") {
-                        response = api.broadcast(message.text);
+                        response = await api.broadcast(message.text);
                     }
                 }
                 else {
-                    // TODO: send to user
-                    response = api.sendToUser(recipient, message.text);
+                    context.log("Broadcast as by default");
+                    response = await api.broadcast(message.text);
                 }
             }
+
             context.res = {
                 body: response,
             };
+            context.log(context.res);
         } else {
             context.res = {
                 status: 400,
-                body: "Invalid message body."
+                body: {
+                    type: 'error',
+                    code: 400,
+                    text: "Invalid message body."
+                }
             }
         }
     }
     else {
         context.res = {
             status: 400,
-            body: "Invalid event."
+            body: {
+                type: 'error',
+                code: 400,
+                text: "Invalid event."
+            }
         };
     }
 };
