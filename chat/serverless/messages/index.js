@@ -78,8 +78,8 @@ var req = {
         event: "message"
     },
     body: {
-        action: "add",
-        group: "group1"
+        action: "broadcast",
+        text: "Hello world"
     }
 };
 func(context, req);
