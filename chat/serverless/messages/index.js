@@ -1,9 +1,6 @@
+const url = "https://lianwei-ws-1.servicedev.signalr.net/";
 
 var func = module.exports = async function (context, req) {
-    context.log('JavaScript HTTP trigger function processed a request.');
-    context.log(req.body);
-    context.log(req.query.event);
-
     var event = req.query.event;
 
     // todo: need claims to pass the data
@@ -21,11 +18,11 @@ var func = module.exports = async function (context, req) {
 
     } else if (event === "disconnect") {
         // todo: integrate with Azure Storage
-        console.log(user + "(" + connectionId + ") disconnected");
+        context.log(user + "(" + connectionId + ") disconnected");
         // clean up
     } else if (event == "message") {
         if (req.body) {
-            var api = require('./api')(user);
+            var api = require('./api')(user, connectionId, url);
             var response = '';
             var message = req.body;
             const recipient = message.recipient || user;

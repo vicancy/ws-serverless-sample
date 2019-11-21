@@ -9,13 +9,12 @@
   <link rel="icon" href="favicon.ico">
 
   <title>Serverless WebSocket Chat</title>
+  <script src="https://unpkg.com/feather-icons"></script>
 
+  <script>window.baseUrl = 'https://lianwei-wsmessages.azurewebsites.net';</script>
   <!-- Bootstrap core CSS -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.1.3/dist/css/bootstrap.min.css">
 
-  <script>
-    window.apiBaseUrl = 'http://localhost:7071';
-  </script>
   <!-- Custom styles for this template -->
   <style>
     html,
@@ -100,6 +99,23 @@
       /* Space for fixed navbar */
     }
 
+    .online {
+      color: #0f0
+    }
+
+    li.active {
+      background: #fff;
+      border-top: 1px solid #dee2e6;
+      border-bottom: 1px solid #dee2e6;
+    }
+
+    #chat {
+      padding-top: 1rem;
+      min-height: calc(100vh - 15rem - 1px);
+      height: calc(-1px + -15rem + 100vh);
+      overflow: auto;
+    }
+
     /*
  * Navbar
  */
@@ -126,14 +142,7 @@
 
     .form-control-dark:focus {
       border-color: transparent;
-      box-shadow: 0 0 0 3px rgba(255, 255, 255, .25);
-    }
-
-    #chat {
-      padding-top: 1rem;
-      min-height: calc(100vh - 15rem - 1px);
-      height: calc(-1px + -15rem + 100vh);
-      overflow: auto;
+      box-shadow: 0 0 0 3px rgba(255, 25zd5, 255, .25);
     }
   </style>
 </head>
@@ -162,32 +171,45 @@
             </div>
           </div>
           <h4 class="sidebar-heading d-flex justify-content-between align-items-center px-3 mt-4 mb-1 text-muted">
-            <span>Online users</span>
-            <a class="d-flex align-items-center text-muted" href="#">
-              <span data-feather="plus-circle"></span>
-            </a>
+            <span><i data-feather="circle" class="mr-1 online"></i>Online users</span>
           </h4>
 
-          <ul class="nav flex-column" v-for="userchat in userchats" v-bind:key="userchat.id">
-            <li class="nav-item">
-              <a class="nav-link active" href="#">
-                <span data-feather="home"></span>
-                {{userchat.name}} <span class="sr-only">(current)</span>
+          <ul class="nav flex-column" v-for="chat in userChats" v-bind:key="chat.id">
+            <li class="nav-item" v-bind:class="{active: currentChat === chat}">
+              <a class="nav-link" href="#" v-on:click.prevent="currentChat = chat">
+                <span data-feather="coffee"></span>
+                {{chat.name}} <span class="sr-only">(current)</span>
               </a>
             </li>
           </ul>
 
           <h4 class="sidebar-heading d-flex justify-content-between align-items-center px-3 mt-4 mb-1 text-muted">
-            <span>Group Chat</span>
-            <a class="d-flex align-items-center text-muted" href="#">
-              <span data-feather="plus-circle"></span>
-            </a>
+            <span><i data-feather="layers" class="mr-1"></i>Group Chat</span>
+            <a class="d-flex align-items-center" href="#"> </a>
+            <a href="#" v-on:click.prevent="addingGroup = !addingGroup"><span data-feather="plus-circle"></span></a>
           </h4>
-          <ul class="nav flex-column mb-2" v-for="groupchat in groupchats" v-bind:key="groupchat.id">
-            <li class="nav-item">
-              <a class="nav-link" href="#">
-                <span data-feather="file-text"></span>
-                {{groupchat.name}}
+          
+          <form :hidden="!addingGroup" v-on:submit.prevent="addGroupChat(addingGroupName)">
+              <input class="form-control mx-2" type="text" v-model="addingGroupName" placeholder="Type group name">
+          </form>
+
+          <ul class="nav flex-column mb-2" v-for="chat in groupChats" v-bind:key="chat.id">
+            <li class="nav-item" v-bind:class="{active: currentChat === chat}">
+              <a class="nav-link" href="#" v-on:click.prevent="currentChat = chat">
+                <span data-feather="unlock"></span>
+                {{chat.name}}
+              </a>
+            </li>
+          </ul>
+
+          <h4 class="sidebar-heading d-flex justify-content-between align-items-center px-3 mt-4 mb-1 text-muted">
+            <span><i data-feather="layers" class="mr-1"></i>Public Chat</span>
+          </h4>
+          <ul class="nav flex-column mb-2" v-for="chat in publicChats" v-bind:key="chat.id">
+            <li class="nav-item" v-bind:class="{active: currentChat === chat}">
+              <a class="nav-link" href="#" v-on:click.prevent="currentChat = chat">
+                <span data-feather="unlock"></span>
+                {{chat.name}}
               </a>
             </li>
           </ul>
@@ -197,11 +219,17 @@
       <main role="main" class="col-md-9 ml-sm-auto col-lg-10 px-4">
         <div
           class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
-          <h1 v-if="currentchat!=null" class="h2">Chat with {{currentchat.name}}</h1>
+          <h1 v-if="currentChat!=null" class="h2">Chat with {{currentChat.name}}</h1>
           <div class="btn-toolbar mb-2 mb-md-0">
-            <div class="btn-group mr-2">
-              <button class="btn btn-sm btn-outline-secondary">Share</button>
-              <button class="btn btn-sm btn-outline-secondary">Export</button>
+            <button type="button" id="dropdownMenuButton" class="btn btn-sm btn-outline-primary" data-toggle="dropdown"
+              aria-haspopup="true" aria-expanded="false">
+              Invite
+              <span data-feather="plus"></span>
+            </button>
+            <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
+              <template v-for="user in otherUsers" v-bind:key="user.id">
+                <button class="dropdown-item">{{user.name}}</button>
+              </template>
             </div>
           </div>
         </div>
@@ -218,7 +246,6 @@
                 class="text-uppercase font-bold text-error text-center font-weight-light" role="alert">
                 !{{message.code}}!!{{message.text}}
               </div>
-
               <div v-if="message.type == 'log'" class="text-muted text-center font-weight-light" role="alert">
                 {{message.text}}
               </div>
@@ -229,7 +256,8 @@
                 <hr />
               </div>
 
-              <div v-if="message.type == 'self'" class="alert alert-success float-right" role="text">
+              <div v-if="message.type == 'self' || (!message.type && message.from == username)"
+                class="alert alert-success float-right" role="text">
                 {{message.text}}
               </div>
 
@@ -243,20 +271,22 @@
         </div>
         <footer>
           <nav class="navbar navbar-expand-lg navbar-light bg-light border-top mt-4">
-            <div class="input-group">
-              <input type="text" v-model="newMessage" placeholder="Type a new message" class="form-control mr-4">
-              <div class="input-group-append">
-                <button class="btn btn-outline-success" v-on:click.prevent="sendNewMessage(checked)">
-                  Send</button>
+            <form v-on:submit.prevent="sendNewMessage(checked)" class="col-12">
+              <div class="input-group">
+                <input type="text" v-model="newMessage" class="form-control mr-2" placeholder="Send a message">
+                <button type="submit" class="btn btn-outline-secondary col-1" :disabled="!newMessage"><i
+                    data-feather="send"></i></button>
               </div>
-            </div>
+            </form>
           </nav>
         </footer>
 
       </main>
     </div>
   </div>
-
+  <script>
+    feather.replace()
+  </script>
   <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"
     integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo"
     crossorigin="anonymous"></script>
@@ -271,23 +301,46 @@
   <script src="https://cdn.jsdelivr.net/npm/axios@0.18.0/dist/axios.min.js"></script>
   <script>
     const data = {
-      username: '', // todo: oauth
+      username: '%%%___user___%%%', // todo: oauth
       defaultgroup: 'public',
       checked: false,
       newMessage: '',
       messages: [],
       groups: [],
-      currentgroup: null,
-      myConnectionId: '',
       ready: true,
+      showSearch: false,
       searchMessage: '',
-      groupchats: [],
-      userchats: [],
-      currentchat: null,
+      currentChat: null,
+      newGroup: null,
+      addingGroupName: '',
+      addingGroup: false,
+      users: [],
+      chats: [],
+      chatSession: {
+        type: 'group', // 'user',
+
+      }
     };
     const app = new Vue({
       el: '#app',
       data: data,
+      computed: {
+        otherUsers: function () {
+          return this.users.filter(i => i.name !== this.username);
+        },
+        userChats: function () {
+          return this.chats.filter(i => i.type === 'user');
+        },
+        groupChats: function () {
+          return this.chats.filter(i => i.type === 'group');
+        },
+        publicChats: function () {
+          return this.chats.filter(i => i.type === 'public');
+        },
+        currentChat: function () {
+          return this.chats.find(i => i.active);
+        }
+      },
       methods: {
         sendNewMessage: function (isToGroup) {
           if (isToGroup) {
@@ -298,45 +351,19 @@
           }
           this.newMessage = '';
         },
-        searchUserOrGroup: function (searchContent) {
-          newChat({
-            type: 'user',
-            name: searchContent
-          });
-          this.searchContent = '';
-        },
-        addToGroup: function (connectionId, recipient) {
-          var r;
-          if (connectionId) {
-            r = confirm('Add connection ' + connectionId + ' to group: ' + this.defaultgroup);
-          } else {
-            r = confirm('Add user ' + recipient + ' to group: ' + this.defaultgroup);
-          }
-          if (r) {
-            addGroup(recipient, connectionId, this.defaultgroup);
-          }
-        },
-        removeFromGroup: function (connectionId, recipient) {
-          var r;
-          if (connectionId) {
-            r = confirm('Remove connection ' + connectionId + ' from group: ' + this.defaultgroup);
-          } else {
-            r = confirm('Remove user ' + recipient + ' from group: ' + this.defaultgroup);
-          }
-          if (r) {
-            removeGroup(recipient, connectionId, this.defaultgroup);
+        addGroupChat: function(group){
+          if (group){
+            var chat = { type: 'group', name: group };
+            addItem(chat, data.chats);
+            this.addingGroupName = '';
+            this.addingGroup = false;
+            this.currentChat = chat;
           }
         }
       }
     });
 
-    const apiBaseUrl = prompt('Enter the Azure Function app base URL', window.apiBaseUrl);
-    data.username = '%%%___user___%%%';
-
-
     function sendMessage(recipient, group, messageText) {
-      newMessage({ text: messageText, type: 'self' });
-
       data.websocket.send(JSON.stringify({
         recipient: recipient,
         private: recipient != null,
@@ -362,17 +389,13 @@
     }
 
     let counter = 0;
-    function newChat(chat) {
-      chat.id = counter++;
-      if (chat.type == "group") {
-        data.groupchats.push(chat);
-      } else {
-        data.userchats.push(chat);
-      }
+    function addItem(item, owner) {
+      item.id = counter++; // vue transitions need an id
+      owner.push(item);
     }
+
     function newMessage(message) {
-      message.id = counter++; // vue transitions need an id
-      data.messages.push(message);
+      addItem(message, data.messages);
 
       // todo: not that work because the dom is rendered later, use binding?
       var elem = document.getElementById('chat');
@@ -380,11 +403,6 @@
         elem.scrollTop = elem.scrollHeight;
       }
     };
-
-    function newGroup(group) {
-      group.id = counter++; // vue transitions need an id
-      data.groupchats.push(group);
-    }
 
     function getAxiosConfig() {
       const config = {
@@ -394,14 +412,24 @@
     }
 
     function negotiate() {
-      return axios.post(`${apiBaseUrl}/api/negotiate?name=${data.username}`, null, getAxiosConfig())
+      return axios.post((window.baseUrl || '') + `/api/negotiate?name=${data.username}`, null, getAxiosConfig())
         .then(resp => resp.data);
     }
 
-    data.currentchat = {
-      name: "Public",
-    };
-    newGroup(data.currentchat);
+    addItem({ name: 'A' }, data.users);
+    addItem({ name: 'B' }, data.users);
+    addItem({ name: 'C' }, data.users);
+    addItem({ name: 'D' }, data.users);
+
+    addItem({ type: 'user', name: 'A', }, data.chats); // name is sendToUser({name}), or sendToGroup({name})
+    addItem({ type: 'user', name: 'B', }, data.chats);
+    addItem({ type: 'group', name: 'Group1' }, data.chats);
+    addItem({ type: 'public', name: 'Public', }, data.chats);
+
+    data.currentChat = data.chats[0];
+
+    newMessage({ text: "Connecting...", type: 'system' });
+    /*
     negotiate().then(info => {
       var url = info.url;
 
@@ -423,6 +451,7 @@
       }
 
     }).catch(alert);
+    */
   </script>
 </body>
 
