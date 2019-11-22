@@ -1,11 +1,12 @@
 const axios = require("axios");
 
 // todo: url from token, error handling when REST api call fails
-module.exports = function (_from, _conn, _url) {
+module.exports = function (_from, _conn, _url, _context) {
     return {
         addToGroup: async (user, group) => {
             var log = "Adding " + user + " to group " + group;
-            console.log(log);
+            _context.log(log);
+            _context.log(_url);
             const response = await axios.put(_url + "ws/api/v1/hubs/chat/groups/" + group + "/users/" + user,
                 null, {
 
@@ -18,7 +19,7 @@ module.exports = function (_from, _conn, _url) {
         addConnectionToGroup: async (conn, group) => {
             // PUT /ws/api/v1/hubs/chat/groups/1/connections/123-456
             var log = "Adding " + conn + " to group " + group;
-            console.log(log);
+            _context.log(log);
             const response = await axios.put(_url + "ws/api/v1/hubs/chat/groups/" + group + "/connections/" + conn,
                 null, {
 
@@ -31,7 +32,7 @@ module.exports = function (_from, _conn, _url) {
         removeFromGroup: async (user, group) => {
             // DELETE /ws/api/v1/hubs/chat/groups/1/users/a
             var log = "Removing " + user + " from group " + group;
-            console.log(log);
+            _context.log(log);
             const response = await axios.delete(_url + "ws/api/v1/hubs/chat/groups/" + group + "/users/" + user, {});
 
             return {
@@ -42,7 +43,7 @@ module.exports = function (_from, _conn, _url) {
         removeFromAllGroup: async (user) => {
             // DELETE /ws/api/v1/hubs/chat/users/a/groups
             var log = "Removing " + user + " from all groups";
-            console.log(log);
+            _context.log(log);
 
             const response = await axios.delete(_url + "ws/api/v1/hubs/chat/users/" + user + "/groups", {});
 
@@ -55,7 +56,7 @@ module.exports = function (_from, _conn, _url) {
             // DELETE /ws/api/v1/hubs/chat/groups/1/connections/a
 
             var log = "Removing " + conn + " from group " + group;
-            console.log(log);
+            _context.log(log);
             const response = await axios.delete(_url + "ws/api/v1/hubs/chat/groups/" + group + "/connections/" + conn, {});
 
             return {
@@ -66,9 +67,10 @@ module.exports = function (_from, _conn, _url) {
         sendToGroup: async (group, content) => {
             // POST /ws/api/v1/hubs/chat/groups/{group}
             const log = "Sending to group " + group + ": " + content;
-            console.log(log);
+            _context.log(log);
             const response = await axios.post(_url + "ws/api/v1/hubs/chat/groups/" + group,
                 {
+                    group: group,
                     from: _from,
                     fromId: _conn,
                     date: new Date().toISOString(),
@@ -87,9 +89,10 @@ module.exports = function (_from, _conn, _url) {
         sendToUser: async (user, content) => {
             // POST /ws/api/v1/hubs/chat/users/{user}
             var log = "Send to user " + user + ": " + content;
-            console.log(log);
+            _context.log(log);
             const response = await axios.post(_url + "ws/api/v1/hubs/chat/users/" + user,
                 {
+                    to: user,
                     from: _from,
                     fromId: _conn,
                     date: new Date().toISOString(),
@@ -108,7 +111,7 @@ module.exports = function (_from, _conn, _url) {
         broadcast: async (content) => {
             // POST /ws/api/v1/hubs/chat
             var log = "Broadcast: " + content;
-            console.log(log);
+            _context.log(log);
             const response = await axios.post(_url + "ws/api/v1/hubs/chat/",
                 {
                     from: _from,

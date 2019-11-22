@@ -1,7 +1,8 @@
-const conn = '';
+const conn = 'Endpoint=http://localhost;AccessKey=ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789;Port=8080;Version=1.0;';
 const key = /AccessKey=(.*?);/g.exec(conn)[1];
 const endpoint = /Endpoint=(.*?);/g.exec(conn)[1];
-const port = /Port=(.*?);/g.exec(conn)[1];
+const portmatch = /Port=(.*?);/g.exec(conn);
+const port = portmatch ? portmatch[1] : '';
 const audience = endpoint + '/ws/client/';
 var wsurl = endpoint.replace('http', 'ws');
 if(port){
@@ -40,7 +41,7 @@ var func = module.exports = async function (context, req) {
     else {
         context.res = {
             status: 401,
-            body: "Bad user name."
+            body: "To test the app, please add ?name={username} query string."
         };
     }
 };

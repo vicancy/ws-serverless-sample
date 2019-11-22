@@ -188,15 +188,15 @@
             <a class="d-flex align-items-center" href="#"> </a>
             <a href="#" v-on:click.prevent="addingGroup = !addingGroup"><span data-feather="plus-circle"></span></a>
           </h4>
-          
+
           <form :hidden="!addingGroup" v-on:submit.prevent="addGroupChat(addingGroupName)">
-              <input class="form-control mx-2" type="text" v-model="addingGroupName" placeholder="Type group name">
+            <input class="form-control mx-2" type="text" v-model="addingGroupName" placeholder="Type group name">
           </form>
 
           <ul class="nav flex-column mb-2" v-for="chat in groupChats" v-bind:key="chat.id">
             <li class="nav-item" v-bind:class="{active: currentChat === chat}">
               <a class="nav-link" href="#" v-on:click.prevent="currentChat = chat">
-                <span data-feather="unlock"></span>
+                <span data-feather="users"></span>
                 {{chat.name}}
               </a>
             </li>
@@ -208,7 +208,7 @@
           <ul class="nav flex-column mb-2" v-for="chat in publicChats" v-bind:key="chat.id">
             <li class="nav-item" v-bind:class="{active: currentChat === chat}">
               <a class="nav-link" href="#" v-on:click.prevent="currentChat = chat">
-                <span data-feather="unlock"></span>
+                <span data-feather="users"></span>
                 {{chat.name}}
               </a>
             </li>
@@ -221,57 +221,58 @@
           class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
           <h1 v-if="currentChat!=null" class="h2">Chat with {{currentChat.name}}</h1>
           <div class="btn-toolbar mb-2 mb-md-0">
-            <button type="button" id="dropdownMenuButton" class="btn btn-sm btn-outline-primary" data-toggle="dropdown"
-              aria-haspopup="true" aria-expanded="false">
+            <button v-if="currentChat!=null && currentChat.type === 'group'" type="button" id="dropdownMenuButton"
+              class="btn btn-sm btn-outline-primary" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
               Invite
               <span data-feather="plus"></span>
             </button>
             <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
               <template v-for="user in otherUsers" v-bind:key="user.id">
-                <button class="dropdown-item">{{user.name}}</button>
+                <button class="dropdown-item"
+                  v-on:click.prevent="addUserToGroup(currentChat, user.name)">{{user.name}}</button>
               </template>
             </div>
           </div>
         </div>
 
         <div class="my-4 w-100 " id="chat">
+          <template v-if="currentChat!=null">
+            <div v-for="message in currentChat.messages" v-bind:key="message.id">
+              <div class="col-md row" style="display: inline-block;">
+                <div v-if="message.type ==='system'"
+                  class="text-capitalize font-italic text-info text-center font-weight-light" role="alert">
+                  {{message.text}}
+                </div>
+                <div v-if="message.type ==='error'"
+                  class="text-uppercase font-bold text-error text-center font-weight-light" role="alert">
+                  !{{message.code}}!!{{message.text}}
+                </div>
+                <div v-if="message.type == 'log'" class="text-muted text-center font-weight-light" role="alert">
+                  {{message.text}}
+                </div>
+                <div v-if="message.type == 'alert'"
+                  class="text-capitalize font-italic text-warning text-center font-weight-light" role="alert">
+                  {{message.text}}
+                  <hr />
+                </div>
 
-          <div v-for="message in messages" v-bind:key="message.id">
-            <div class="col-md row" style="display: inline-block;">
-              <div v-if="message.type ==='system'"
-                class="text-capitalize font-italic text-info text-center font-weight-light" role="alert">
-                {{message.text}}
-              </div>
-              <div v-if="message.type ==='error'"
-                class="text-uppercase font-bold text-error text-center font-weight-light" role="alert">
-                !{{message.code}}!!{{message.text}}
-              </div>
-              <div v-if="message.type == 'log'" class="text-muted text-center font-weight-light" role="alert">
-                {{message.text}}
-              </div>
+                <div v-if="message.type == 'self' || (!message.type && message.from == username)"
+                  class="alert alert-success float-right" role="text">
+                  {{message.text}}
+                </div>
 
-              <div v-if="message.type == 'alert'"
-                class="text-capitalize font-italic text-warning text-center font-weight-light" role="alert">
-                {{message.text}}
-                <hr />
-              </div>
-
-              <div v-if="message.type == 'self' || (!message.type && message.from == username)"
-                class="alert alert-success float-right" role="text">
-                {{message.text}}
-              </div>
-
-              <div v-if="!message.type && message.from != username" class="float-left" role="text">
-                <small class="text-muted font-weight-light">{{message.date}}</small><br />
-                <small class="text-muted font-weight-light">From <a href="#">{{message.from}}</a></small>
-                <p class="alert alert-primary text-break ">{{message.text}}</p>
+                <div v-if="!message.type && message.from != username" class="float-left" role="text">
+                  <small class="text-muted font-weight-light">{{message.date}}</small><br />
+                  <small class="text-muted font-weight-light">From <a href="#">{{message.from}}</a></small>
+                  <p class="alert alert-primary text-break ">{{message.text}}</p>
+                </div>
               </div>
             </div>
-          </div>
+          </template>
         </div>
         <footer>
           <nav class="navbar navbar-expand-lg navbar-light bg-light border-top mt-4">
-            <form v-on:submit.prevent="sendNewMessage(checked)" class="col-12">
+            <form v-on:submit.prevent="sendNewMessage()" class="col-12">
               <div class="input-group">
                 <input type="text" v-model="newMessage" class="form-control mr-2" placeholder="Send a message">
                 <button type="submit" class="btn btn-outline-secondary col-1" :disabled="!newMessage"><i
@@ -301,6 +302,7 @@
   <script src="https://cdn.jsdelivr.net/npm/axios@0.18.0/dist/axios.min.js"></script>
   <script>
     const data = {
+      websocket: null,
       username: '%%%___user___%%%', // todo: oauth
       defaultgroup: 'public',
       checked: false,
@@ -310,16 +312,11 @@
       ready: true,
       showSearch: false,
       searchMessage: '',
-      currentChat: null,
-      newGroup: null,
       addingGroupName: '',
       addingGroup: false,
+      currentChat: null,
       users: [],
-      chats: [],
-      chatSession: {
-        type: 'group', // 'user',
-
-      }
+      chats: []
     };
     const app = new Vue({
       el: '#app',
@@ -336,39 +333,69 @@
         },
         publicChats: function () {
           return this.chats.filter(i => i.type === 'public');
-        },
-        currentChat: function () {
-          return this.chats.find(i => i.active);
         }
       },
       methods: {
-        sendNewMessage: function (isToGroup) {
-          if (isToGroup) {
-            sendMessage(null, this.defaultgroup, this.newMessage);
+        sendNewMessage: function () {
+          if (!this.currentChat || !this.newMessage) {
+            console.error("Empty message");
           }
-          else {
+          if (this.currentChat.type === 'group') {
+            sendMessage(null, this.currentChat.name, this.newMessage);
+          } else if (this.currentChat.type === 'user') {
+            this.currentChat.messages.push({type: 'self', text: this.newMessage, date: new Date().toISOString()}); //replay the message 
+            sendMessage(this.currentChat.name, null, this.newMessage);
+          } else if (this.currentChat.type === 'public') {
             sendMessage(null, null, this.newMessage);
           }
           this.newMessage = '';
         },
-        addGroupChat: function(group){
-          if (group){
-            var chat = { type: 'group', name: group };
+        addChat: function (chatType, chatName) {
+          if (chatName && ['public', 'group', 'user'].includes(chatType)){
+            var chat = { type: chatType, name: chatName, messages: [] };
             addItem(chat, data.chats);
+            return chat;
+          } else {
+            console.error("Invalid input: chat type: " + chatType + " chat name: " + chatName);
+            return null;
+          }
+        },
+        addGroupChat: function (group) {
+          var chat = this.addChat('group', group);
+          if (chat) {
+            this.currentChat = chat;
             this.addingGroupName = '';
             this.addingGroup = false;
-            this.currentChat = chat;
+            addGroup(null, null, group);
+          }
+        },
+        addUserToGroup: function (chat, user) {
+          addItem({ type: 'system', text: 'Client: adding ' + user + ' to ' + chat.name }, chat.messages);
+          sendMessage(user, chat.name, null, 'add');
+        },
+        getOrAddChat: function (chatType, chatName) {
+          if (['public', 'group', 'user'].includes(chatType)) {
+            var chat = this.chats.filter(i => i.type === chatType).find(s => s.name === chatName);
+            if (chat) {
+              // update
+              return chat;
+            } else{
+              // add
+              return this.addChat(chatType, chatName);
+            }
+          } else {
+            console.error("Unknown chat type: " + chatType);
           }
         }
       }
     });
 
-    function sendMessage(recipient, group, messageText) {
+    function sendMessage(recipient, group, messageText, action) {
       data.websocket.send(JSON.stringify({
         recipient: recipient,
-        private: recipient != null,
         group: group,
-        text: messageText
+        text: messageText,
+        action: action
       }));
     }
     function addGroup(recipient, connectionId, group) {
@@ -395,7 +422,9 @@
     }
 
     function newMessage(message) {
-      addItem(message, data.messages);
+      var chat = app.getOrAddChat(message.chatType || 'public', message.chatName || 'System');
+
+      addItem(message, chat.messages);
 
       // todo: not that work because the dom is rendered later, use binding?
       var elem = document.getElementById('chat');
@@ -416,20 +445,19 @@
         .then(resp => resp.data);
     }
 
+    newMessage({ text: "Connecting...", type: 'system' });
+
+    data.currentChat = data.chats[0];
+
     addItem({ name: 'A' }, data.users);
     addItem({ name: 'B' }, data.users);
     addItem({ name: 'C' }, data.users);
     addItem({ name: 'D' }, data.users);
 
-    addItem({ type: 'user', name: 'A', }, data.chats); // name is sendToUser({name}), or sendToGroup({name})
-    addItem({ type: 'user', name: 'B', }, data.chats);
-    addItem({ type: 'group', name: 'Group1' }, data.chats);
-    addItem({ type: 'public', name: 'Public', }, data.chats);
+    app.otherUsers.forEach(u=>{
+      app.getOrAddChat('user', u.name);
+    })
 
-    data.currentChat = data.chats[0];
-
-    newMessage({ text: "Connecting...", type: 'system' });
-    /*
     negotiate().then(info => {
       var url = info.url;
 
@@ -437,21 +465,34 @@
 
       var websocket = data.websocket = new WebSocket(url);
       websocket.onopen = e => {
-        newMessage({ text: "Connect dectected from client", isPrivate: true, type: 'system' });
+        newMessage({ text: "Connect dectected from client", type: 'system' });
       }
       websocket.onclose = e => {
-        newMessage({ text: "Disconnect detected from client", isPrivate: true, type: 'system' });
+        newMessage({ text: "Disconnect detected from client", type: 'system' });
       }
       websocket.onerror = e => {
-        newMessage({ text: "Error detected from client " + e.data, isPrivate: true, type: 'system' });
+        newMessage({ text: "Error detected from client " + e.data, type: 'system' });
       }
 
       websocket.onmessage = e => {
-        newMessage(JSON.parse(e.data));
+        var message = JSON.parse(e.data);
+        if (message.group){
+          // group send
+          message.chatType = 'group';
+          message.chatName = message.group;
+        } else if (message.to){
+          // user send
+          message.chatType = 'user';
+          message.chatName = message.from;
+        }
+
+        newMessage(message);
       }
 
     }).catch(alert);
-    */
+
+
+
   </script>
 </body>
 
