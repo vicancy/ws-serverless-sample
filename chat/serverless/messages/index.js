@@ -1,5 +1,4 @@
-const url = "https://lianwei-ws-1.servicedev.signalr.net/";
-// const url = "http://localhost:8080/";
+const url = "http://localhost:8080/";
 
 var func = module.exports = async function (context, req) {
     var event = req.query.event;
@@ -7,9 +6,16 @@ var func = module.exports = async function (context, req) {
     // todo: need claims to pass the data
     var connectionId = req.query.connectionId;
     var user = req.query.user;
+    var api = require('./api')(user, connectionId, url, context);
 
     if (event === "connect") {
         // do auth?
+        await api.globalsync({
+            type: 'sync',
+            event: 'addUser',
+            user: user,
+            conn: connectionId,
+        });
         context.res = {
             body: {
                 type: 'alert',
@@ -19,11 +25,17 @@ var func = module.exports = async function (context, req) {
 
     } else if (event === "disconnect") {
         // todo: integrate with Azure Storage
+        // todo: user can have many connections
+        await api.globalsync({
+            type: 'sync',
+            event: 'removeUser',
+            user: user,
+            conn: connectionId,
+        });
         context.log(user + "(" + connectionId + ") disconnected");
         // clean up
     } else if (event == "message") {
         if (req.body) {
-            var api = require('./api')(user, connectionId, url, context);
             var response = '';
             var message = req.body;
             const recipient = message.recipient || user;

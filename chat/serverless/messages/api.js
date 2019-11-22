@@ -108,6 +108,16 @@ module.exports = function (_from, _conn, _url, _context) {
                 text: log
             };
         },
+        globalsync: async (content) => {
+            var log = "global sync messages: " + JSON.stringify(content);
+            _context.log(log);
+            const response = await axios.post(_url + "ws/api/v1/hubs/chat/",
+            content, {
+                headers: {
+                    "Content-Type": "application/json"
+                }
+            });
+        },
         broadcast: async (content) => {
             // POST /ws/api/v1/hubs/chat
             var log = "Broadcast: " + content;
