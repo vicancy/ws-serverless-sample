@@ -68,16 +68,9 @@ module.exports = function (_from, _conn, _url, _context) {
         },
         sendToGroup: async (group, content) => {
             // POST /ws/api/v1/hubs/chat/groups/{group}
-            const log = "Sending to group " + group + ": " + content;
+            const log = "Sending to group " + group + ": " + JSON.stringify(content);
             _context.log(log);
-            const response = await axios.post(_url + "ws/api/v1/hubs/chat/groups/" + group,
-                {
-                    group: group,
-                    from: _from,
-                    fromId: _conn,
-                    date: new Date().toISOString(),
-                    text: content
-                }, {
+            const response = await axios.post(_url + "ws/api/v1/hubs/chat/groups/" + group, content, {
                 headers: {
                     "Content-Type": "application/json"
                 }
@@ -90,16 +83,9 @@ module.exports = function (_from, _conn, _url, _context) {
         },
         sendToUser: async (user, content) => {
             // POST /ws/api/v1/hubs/chat/users/{user}
-            var log = "Send to user " + user + ": " + content;
+            var log = "Send to user " + user + ": " + JSON.stringify(content);
             _context.log(log);
-            const response = await axios.post(_url + "ws/api/v1/hubs/chat/users/" + user,
-                {
-                    to: user,
-                    from: _from,
-                    fromId: _conn,
-                    date: new Date().toISOString(),
-                    text: content
-                }, {
+            const response = await axios.post(_url + "ws/api/v1/hubs/chat/users/" + user, content, {
                 headers: {
                     "Content-Type": "application/json"
                 }
@@ -107,31 +93,29 @@ module.exports = function (_from, _conn, _url, _context) {
 
             return {
                 type: 'log',
-                text: log
+                text: log 
             };
         },
-        globalsync: async (content) => {
-            var log = "global sync messages: " + JSON.stringify(content);
-            const response = await axios.post(_url + "ws/api/v1/hubs/chat",
-            content, {
+        sendToConnection: async (connection, content) => {
+            // POST /ws/api/v1/hubs/chat/connections/{connection}
+            var log = "Send to connection " + connection + ": " + JSON.stringify(content);
+            _context.log(log);
+            const response = await axios.post(_url + "ws/api/v1/hubs/chat/connections/" + connection, content, {
                 headers: {
                     "Content-Type": "application/json"
                 }
             });
 
-            _context.log(log);
+            return {
+                type: 'log',
+                text: log 
+            };
         },
         broadcast: async (content) => {
             // POST /ws/api/v1/hubs/chat
-            var log = "Broadcast: " + content;
+            var log = "Broadcast: " + JSON.stringify(content);
             _context.log(log);
-            const response = await axios.post(_url + "ws/api/v1/hubs/chat",
-                {
-                    from: _from,
-                    fromId: _conn,
-                    date: new Date().toISOString(),
-                    text: content
-                }, {
+            const response = await axios.post(_url + "ws/api/v1/hubs/chat", content, {
                 headers: {
                     "Content-Type": "application/json"
                 }

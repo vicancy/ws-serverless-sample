@@ -4,6 +4,7 @@
     "AzureSignalRConnectionString": "Endpoint=http://localhost;AccessKey=ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789;Port=8080;Version=1.0;",
     "WebsiteUrl": "http://localhost:7071",
     "FUNCTIONS_WORKER_RUNTIME": "node",
+    "AzureWebJobsStorage": "UseDevelopmentStorage=true"
   },
   "ConnectionStrings": {},
   "Host": {

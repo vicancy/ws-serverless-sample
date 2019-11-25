@@ -1,7 +1,7 @@
 var path = require('path');
 var fs = require('fs');
 module.exports = async function (context, req) {
-    var webUrl = process.env["WebsiteUrl"] || 'http://localhost:8080/'; 
+    var webUrl = process.env["WebsiteUrl"] || ''; 
     var contentFile = path.join(context.executionContext.functionDirectory, "index.html");
     context.log(contentFile);
     var content = fs.readFileSync(contentFile, { encoding: 'utf-8' });

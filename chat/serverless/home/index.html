@@ -339,6 +339,10 @@
         setCurrentChat: function(chat) {
           chat.unread = 0;
           this.currentChat = chat;
+          if (!chat.historyLoaded && chat.chatKey) {
+            sendMessage(chat.chatKey, null, null, 'loadHistory');
+            chat.historyLoaded = true;
+          }
         },
         sendNewMessage: function () {
           if (!this.currentChat || !this.newMessage) {
@@ -354,9 +358,9 @@
           }
           this.newMessage = '';
         },
-        addChat: function (chatType, chatName) {
+        addChat: function (chatType, chatName, chatKey) {
           if (chatName && ['public', 'group', 'user'].includes(chatType)){
-            var chat = { type: chatType, name: chatName, messages: [], unread: 0 };
+            var chat = { type: chatType, name: chatName, messages: [], unread: 0, chatKey: chatKey, historyLoaded: false };
             addItem(chat, data.chats);
             return chat;
           } else {
@@ -391,7 +395,7 @@
               this.$delete(this.chats, index);
             }
         },
-        getOrAddChat: function (chatType, chatName) {
+        getOrAddChat: function (chatType, chatName, chatKey) {
           if (['public', 'group', 'user'].includes(chatType)) {
             var chat = this.chats.filter(i => i.type === chatType).find(s => s.name === chatName);
             if (chat) {
@@ -399,7 +403,7 @@
               return chat;
             } else{
               // add
-              return this.addChat(chatType, chatName);
+              return this.addChat(chatType, chatName, chatKey);
             }
           } else {
             console.error("Unknown chat type: " + chatType);
@@ -440,7 +444,7 @@
     }
 
     function newMessage(message) {
-      var chat = app.getOrAddChat(message.chatType || 'public', message.chatName || 'System');
+      var chat = app.getOrAddChat(message.chatType || 'public', message.chatName || 'System', message.chatKey);
       if (chat !== app.currentChat){
         // add unread mark
         chat.unread++;
@@ -489,8 +493,26 @@
       }
 
       websocket.onmessage = e => {
+        if (!e.data){
+          return;
+        }
         var message = JSON.parse(e.data);
-        if (message.type === 'sync'){
+        if (Array.isArray(message)){
+          message.forEach(element => {
+            showMessage(element);
+          });
+        } else {
+          showMessage(message)
+        }
+      }
+
+    }).catch(alert);
+
+    function showMessage(message){
+      if (!message) {
+        return;
+      }
+      if (message.type === 'sync'){
           if (message.event === 'removeUser'){
             var chat = app.removeChat('user', message.user);
           } else if (message.event === 'addUser'){
@@ -498,8 +520,11 @@
           }
         } else if (message.type === 'connected') {
           message.users.forEach(element => {
-            app.getOrAddChat('user', element);
+            app.getOrAddChat('user', element, element.chatKey);
           });
+          message.groups.forEach(element =>{
+            app.getOrAddChat('group', element.group, element.chatKey)
+          })
           newMessage({ text: 'User ' + message.user + '(' + message.connection + ') logged in', type: 'log' });
         }
         else if (message.group){
@@ -513,11 +538,7 @@
         }
 
         newMessage(message);
-      }
-
-    }).catch(alert);
-
-
+    }
 
   </script>
 </body>
