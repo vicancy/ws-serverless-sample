@@ -2,6 +2,8 @@ const axios = require("axios");
 
 // todo: url from token, error handling when REST api call fails
 module.exports = function (_from, _conn, _url, _context) {
+    _url = _url.substr(-1) === '/' ? _url : _url + '/';
+    _context.log(_url);
     return {
         addToGroup: async (user, group) => {
             var log = "Adding " + user + " to group " + group;
@@ -110,19 +112,20 @@ module.exports = function (_from, _conn, _url, _context) {
         },
         globalsync: async (content) => {
             var log = "global sync messages: " + JSON.stringify(content);
-            _context.log(log);
-            const response = await axios.post(_url + "ws/api/v1/hubs/chat/",
+            const response = await axios.post(_url + "ws/api/v1/hubs/chat",
             content, {
                 headers: {
                     "Content-Type": "application/json"
                 }
             });
+
+            _context.log(log);
         },
         broadcast: async (content) => {
             // POST /ws/api/v1/hubs/chat
             var log = "Broadcast: " + content;
             _context.log(log);
-            const response = await axios.post(_url + "ws/api/v1/hubs/chat/",
+            const response = await axios.post(_url + "ws/api/v1/hubs/chat",
                 {
                     from: _from,
                     fromId: _conn,

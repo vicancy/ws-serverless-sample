@@ -1,17 +1,14 @@
-const conn = 'Endpoint=http://localhost;AccessKey=ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789;Port=8080;Version=1.0;';
+const jwt = require('jsonwebtoken');
+const uri = require('url');
+
+const conn = process.env["AzureSignalRConnectionString"] || 'Endpoint=http://localhost;AccessKey=ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789;Port=8080;Version=1.0;';
 const key = /AccessKey=(.*?);/g.exec(conn)[1];
 const endpoint = /Endpoint=(.*?);/g.exec(conn)[1];
 const portmatch = /Port=(.*?);/g.exec(conn);
-const port = portmatch ? portmatch[1] : '';
+const port = portmatch ? ':' + portmatch[1] : '';
 const audience = endpoint + '/ws/client/';
-var wsurl = endpoint.replace('http', 'ws');
-if(port){
-    wsurl += ':' + port;
-}
-const url = wsurl + '/ws/client/?hub=chat&serverless=true';
-const fs = require('fs');
-const jwt = require('jsonwebtoken');
-const uri = require('url');
+const url = endpoint.replace('http', 'ws') + port + '/ws/client/?hub=chat&serverless=true';
+
 var func = module.exports = async function (context, req) {
     const user = (req.headers["x-ms-client-principal-name"]) || req.query.name || (req.body && req.body.name);
     if (user) {
@@ -44,6 +41,20 @@ var func = module.exports = async function (context, req) {
             body: "To test the app, please add ?name={username} query string."
         };
     }
+};
+
+async function queryEntities(tableService, ...args) {
+    return new Promise((resolve, reject) => {
+        let promiseHandling = (err, result) => {
+            if (err) {
+                reject(err);
+            } else {
+                resolve(result);
+            }
+        };
+        args.push(promiseHandling);
+        tableService.queryEntities.apply(tableService, args);
+    });
 };
 
 // for local test
