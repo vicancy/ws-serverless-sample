@@ -241,7 +241,7 @@
             <div v-for="message in currentChat.messages" v-bind:key="message.id">
               <div class="col-md row" style="display: inline-block;">
                 <div v-if="message.type ==='system'"
-                  class="text-capitalize font-italic text-info text-center font-weight-light" role="alert">
+                  class="font-italic text-info text-center font-weight-light" role="alert">
                   {{message.text}}
                 </div>
                 <div v-if="message.type ==='error'"
@@ -252,7 +252,7 @@
                   {{message.text}}
                 </div>
                 <div v-if="message.type == 'alert'"
-                  class="text-capitalize font-italic text-warning text-center font-weight-light" role="alert">
+                  class="font-italic text-warning text-center font-weight-light" role="alert">
                   {{message.text}}
                   <hr />
                 </div>
@@ -276,7 +276,7 @@
             <form v-on:submit.prevent="sendNewMessage()" class="col-12">
               <div class="input-group">
                 <input type="text" v-model="newMessage" class="form-control mr-2" placeholder="Send a message">
-                <button type="submit" class="btn btn-outline-secondary col-1" :disabled="!newMessage"><i
+                <button type="submit" class="btn btn-outline-secondary col-2" :disabled="!newMessage"><i
                     data-feather="send"></i></button>
               </div>
             </form>
