@@ -339,8 +339,17 @@
         setCurrentChat: function(chat) {
           chat.unread = 0;
           this.currentChat = chat;
-          if (!chat.historyLoaded && chat.chatKey) {
-            sendMessage(chat.chatKey, null, null, 'loadHistory');
+          if (!chat.historyLoaded) {
+            if (chat.type === 'user'){
+              sendMessage(chat.name, null, null, 'loadHistory');
+            }
+            else if (chat.type === 'group'){
+              sendMessage(null, chat.name, null, 'loadHistory');
+            }
+            else {
+              // broadcast
+              sendMessage(null, null, null, 'loadHistory');
+            }
             chat.historyLoaded = true;
           }
         },
@@ -358,9 +367,9 @@
           }
           this.newMessage = '';
         },
-        addChat: function (chatType, chatName, chatKey) {
+        addChat: function (chatType, chatName) {
           if (chatName && ['public', 'group', 'user'].includes(chatType)){
-            var chat = { type: chatType, name: chatName, messages: [], unread: 0, chatKey: chatKey, historyLoaded: false };
+            var chat = { type: chatType, name: chatName, messages: [], unread: 0, historyLoaded: false };
             addItem(chat, data.chats);
             return chat;
           } else {
@@ -395,7 +404,7 @@
               this.$delete(this.chats, index);
             }
         },
-        getOrAddChat: function (chatType, chatName, chatKey) {
+        getOrAddChat: function (chatType, chatName) {
           if (['public', 'group', 'user'].includes(chatType)) {
             var chat = this.chats.filter(i => i.type === chatType).find(s => s.name === chatName);
             if (chat) {
@@ -403,7 +412,7 @@
               return chat;
             } else{
               // add
-              return this.addChat(chatType, chatName, chatKey);
+              return this.addChat(chatType, chatName);
             }
           } else {
             console.error("Unknown chat type: " + chatType);
@@ -444,10 +453,13 @@
     }
 
     function newMessage(message) {
-      var chat = app.getOrAddChat(message.chatType || 'public', message.chatName || 'System', message.chatKey);
+      var chat = app.getOrAddChat(message.chatType || 'public', message.chatName || 'System');
       if (chat !== app.currentChat){
         // add unread mark
-        chat.unread++;
+        if (!message.type){
+          // no type specified, this is a real message
+          chat.unread++;
+        }
       } else {
         chat.unread = 0;
       }
@@ -520,10 +532,10 @@
           }
         } else if (message.type === 'connected') {
           message.users.forEach(element => {
-            app.getOrAddChat('user', element, element.chatKey);
+            app.getOrAddChat('user', element);
           });
           message.groups.forEach(element =>{
-            app.getOrAddChat('group', element.group, element.chatKey)
+            app.getOrAddChat('group', element)
           })
           newMessage({ text: 'User ' + message.user + '(' + message.connection + ') logged in', type: 'log' });
         }

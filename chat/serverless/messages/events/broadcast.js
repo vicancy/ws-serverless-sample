@@ -1,9 +1,20 @@
 module.exports = function (context, api, table, user, connectionId) {
+    const chatKey = '_chats_broadcast';
     return {
+        loadHistory: async function () {
+            var chatContent = await table.queryChat(chatKey);
+            var response = await api.sendToConnection(connectionId, chatContent);
+
+            context.res = {
+                body: {
+                    type: 'log',
+                    text: response,
+                }
+            };
+        },
         broadcast: async function(message){
             const date = new Date().toISOString();
             context.log("Broadcast as by default");
-            const chatKey = "_chats_broadcast";
             var content = {
                 from: user,
                 fromId: connectionId,

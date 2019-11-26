@@ -37,29 +37,13 @@ var func = module.exports = async function (context, req) {
     // otherwise it is message sending
     var message = req.body;
 
-    if (message.action === 'loadHistory') {
-        const chatKey = message.recipient;
-        var query = table.query().where("PartitionKey eq '" + chatKey + "'").select('sentTime', 'content').top(20);
-        var chats = (await table.exec('queryEntities', 'chat', query, null)).entries.map(i => {
-            return {
-                time: i.sentTime['_'],
-                content: i.content['_']
-            };
-        }).sort(i => i.time).map(i => i.content).join(',');
-        var chatContent = '[' + chats + ']';
-        var response = await api.sendToConnection(connectionId, chatContent);
-        context.res = {
-            body: {
-                type: 'log',
-                text: response,
-            }
-        };
-        return;
-    }
-
     if (message.group) {
         var group = require('./events/group')(context, api, table, message.group, user, connectionId);
         const recipient = message.recipient || user;
+        if (message.action === 'loadHistory'){
+            await group.loadHistory();
+            return;
+        }
         if (message.action === 'add' || message.action === 'remove') {
             var action = group[message.action];
             await action(recipient);
@@ -67,12 +51,20 @@ var func = module.exports = async function (context, req) {
             await group.send(message.text);
         }
     } else if (message.recipient) {
-        var userSend = require('./events/user')(context, api, table, user, connectionId).send;
-        await userSend(message.recipient, message.text);
+        var user = require('./events/user')(context, api, table, user, connectionId);
+        if (message.action === 'loadHistory'){
+            await user.loadHistory(message.recipient);
+            return;
+        }
+        await user.send(message.recipient, message.text);
     }
     else {
-        var broadcast = require('./events/broadcast')(context, api, table, user, connectionId).broadcast;
-        await broadcast(message.text);
+        var broadcast = require('./events/broadcast')(context, api, table, user, connectionId);
+        if (message.action === 'loadHistory'){
+            await broadcast.loadHistory();
+            return;
+        }
+        await broadcast.broadcast(message.text);
     }
 };
 

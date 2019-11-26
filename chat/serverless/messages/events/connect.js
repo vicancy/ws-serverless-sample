@@ -25,13 +25,8 @@ module.exports = function (context, api, table, user, connectionId) {
 
             // get top 20 chats for top 10 groups
 
-            var userGroupQuery = table.query().where("PartitionKey eq '_usergroups_" + user + "'").select('group', 'chatKey').top(10);
-            var groups = (await table.exec('queryEntities', 'chat', userGroupQuery, null)).entries.map(i => {
-                return {
-                    group: i.group['_'],
-                    chatKey: i.chatKey['_']
-                };
-            });
+            var userGroupQuery = table.query().where("PartitionKey eq '_usergroups_" + user + "'").select('group').top(10);
+            var groups = (await table.exec('queryEntities', 'chat', userGroupQuery, null)).entries.map(i => i.group['_']).sort();
 
             context.res = {
                 body: {

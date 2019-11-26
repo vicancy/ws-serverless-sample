@@ -1,6 +1,18 @@
 module.exports = function (context, api, table, group, user, connectionId) {
     const chatKey = '_chats_group_' + group;
     return {
+        loadHistory: async function () {
+            
+            var chatContent = await table.queryChat(chatKey);
+            var response = await api.sendToConnection(connectionId, chatContent);
+
+            context.res = {
+                body: {
+                    type: 'log',
+                    text: response,
+                }
+            };
+        },
         add: async function (recipient) {
             var userGroup = {
                 PartitionKey: { '_': '_usergroups_' + recipient },
@@ -8,7 +20,6 @@ module.exports = function (context, api, table, group, user, connectionId) {
                 user: { '_': recipient },
                 joinedTime: { '_': new Date().toISOString() },
                 group: { '_': group },
-                chatKey: { '_': chatKey },
             }
             await table.exec('insertOrReplaceEntity', 'chat', userGroup);
 
