@@ -38,32 +38,13 @@
  */
 
     .sidebar {
-      position: fixed;
-      top: 0;
-      bottom: 0;
-      left: 0;
-      z-index: 100;
-      /* Behind the navbar */
-      padding: 48px 0 0;
-      /* Height of navbar */
       box-shadow: inset -1px 0 0 rgba(0, 0, 0, .1);
     }
 
     .sidebar-sticky {
-      position: relative;
-      top: 0;
-      height: calc(100vh - 48px);
-      padding-top: .5rem;
       overflow-x: hidden;
       overflow-y: auto;
       /* Scrollable contents if viewport is shorter than content. */
-    }
-
-    @supports ((position: -webkit-sticky) or (position: sticky)) {
-      .sidebar-sticky {
-        position: -webkit-sticky;
-        position: sticky;
-      }
     }
 
     .sidebar .nav-link {
@@ -90,15 +71,6 @@
       text-transform: uppercase;
     }
 
-    /*
- * Content
- */
-
-    [role="main"] {
-      padding-top: 48px;
-      /* Space for fixed navbar */
-    }
-
     .online {
       color: #0f0
     }
@@ -110,9 +82,6 @@
     }
 
     #chat {
-      padding-top: 1rem;
-      min-height: calc(100vh - 15rem - 1px);
-      height: calc(-1px + -15rem + 100vh);
       overflow: auto;
     }
 
@@ -148,28 +117,20 @@
 </head>
 
 <body>
-  <nav class="navbar navbar-dark fixed-top bg-dark flex-md-nowrap p-0 shadow">
-    <a class="navbar-brand col-sm-3 col-md-2 mr-0" href="#">Serverless WebSocket Chat</a>
-    <span class="ml-auto text-light">Welcome <a href="#"><strong>%%%___user___%%%</strong></a></span>
-    <ul class="navbar-nav px-3">
-      <li class="nav-item text-nowrap">
-        <a class="nav-link" href="#">Sign out</a>
-      </li>
-    </ul>
-  </nav>
+  <div id="app" class="container-fluid h-100 d-flex flex-column flex-nowrap p-0">
+    <nav class="navbar navbar-dark bg-dark flex-md-nowrap p-0 shadow">
+      <a class="navbar-brand col-sm-3 col-md-2 mr-0" href="#">Serverless WebSocket Chat</a>
+      <span class="ml-auto text-light">Welcome <a href="#"><strong>%%%___user___%%%</strong></a></span>
+      <ul class="navbar-nav px-3">
+        <li class="nav-item text-nowrap">
+          <a class="nav-link" href="#">Sign out</a>
+        </li>
+      </ul>
+    </nav>
 
-  <div id="app" class="container-fluid h-100">
-    <div class="row h-100">
-      <nav class="col-md-2 d-none d-md-block bg-light sidebar">
-        <div class="sidebar-sticky ">
-          <div class="input-group px-3 d-none">
-            <input class="mr-2" type="text" v-model="searchMessage" placeholder="Find a user or group to chat"
-              class="form-control">
-            <div class="input-group-append">
-              <button class="btn btn-primary" v-on:click.prevent="searchUserOrGroup(searchMessage)">
-                +</button>
-            </div>
-          </div>
+    <div class="flex-grow d-flex flex-row flex-nowrap" style="overflow: auto; flex: 1;">
+      <nav class="col-md-2 col bg-light sidebar p-0">
+        <div class="sidebar-sticky">
           <h4 class="sidebar-heading d-flex justify-content-between align-items-center px-3 mt-4 mb-1 text-muted">
             <span><i data-feather="circle" class="mr-1 online"></i>Online users</span>
           </h4>
@@ -187,7 +148,7 @@
             <span><i data-feather="layers" class="mr-1"></i>Group Chat</span>
             <a class="d-flex align-items-center" href="#"> </a>
             <a href="#" v-on:click.prevent="addingGroup = !addingGroup"><span data-feather="plus-circle"></span></a>
-            
+
           </h4>
 
           <form :hidden="!addingGroup" v-on:submit.prevent="addGroupChat(addingGroupName)">
@@ -217,9 +178,8 @@
         </div>
       </nav>
 
-      <main role="main" class="col-md-9 ml-sm-auto col-lg-10 px-4">
-        <div
-          class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+      <main role="main" class="col d-flex flex-column flex-nowrap p-md-4 p-2">
+        <div >
           <h1 v-if="currentChat!=null" class="h2">Chat with {{currentChat.name}}</h1>
           <div class="btn-toolbar mb-2 mb-md-0">
             <button v-if="currentChat!=null && currentChat.type === 'group'" type="button" id="dropdownMenuButton"
@@ -236,12 +196,12 @@
           </div>
         </div>
 
-        <div class="my-4 w-100 " id="chat">
+        <div id="chat" class="" style="flex:1">
           <template v-if="currentChat!=null">
             <div v-for="message in currentChat.messages" v-bind:key="message.id">
               <div class="col-md row" style="display: inline-block;">
-                <div v-if="message.type ==='system'"
-                  class="font-italic text-info text-center font-weight-light" role="alert">
+                <div v-if="message.type ==='system'" class="font-italic text-info text-center font-weight-light"
+                  role="alert">
                   {{message.text}}
                 </div>
                 <div v-if="message.type ==='error'"
@@ -251,8 +211,8 @@
                 <div v-if="message.type == 'log'" class="text-muted text-center font-weight-light" role="alert">
                   {{message.text}}
                 </div>
-                <div v-if="message.type == 'alert'"
-                  class="font-italic text-warning text-center font-weight-light" role="alert">
+                <div v-if="message.type == 'alert'" class="font-italic text-warning text-center font-weight-light"
+                  role="alert">
                   {{message.text}}
                   <hr />
                 </div>
@@ -271,17 +231,16 @@
             </div>
           </template>
         </div>
-        <footer>
-          <nav class="navbar navbar-expand-lg navbar-light bg-light border-top mt-4">
-            <form v-on:submit.prevent="sendNewMessage()" class="col-12">
+        <div>
+            <br/>
+            <form v-on:submit.prevent="sendNewMessage()">
               <div class="input-group">
-                <input type="text" v-model="newMessage" class="form-control mr-2" placeholder="Send a message">
-                <button type="submit" class="btn btn-outline-secondary col-2" :disabled="!newMessage"><i
+                <input type="text" v-model="newMessage" class="form-control" placeholder="Send a message">
+                <button type="submit" class="btn btn-outline-secondary col-2 col-md-1" :disabled="!newMessage"><i
                     data-feather="send"></i></button>
               </div>
             </form>
-          </nav>
-        </footer>
+        </div>
 
       </main>
     </div>
@@ -305,13 +264,8 @@
     const data = {
       websocket: null,
       username: '%%%___user___%%%', // todo: oauth
-      defaultgroup: 'public',
-      checked: false,
       newMessage: '',
-      messages: [],
-      groups: [],
       ready: true,
-      showSearch: false,
       searchMessage: '',
       addingGroupName: '',
       addingGroup: false,
@@ -336,14 +290,14 @@
         }
       },
       methods: {
-        setCurrentChat: function(chat) {
+        setCurrentChat: function (chat) {
           chat.unread = 0;
           this.currentChat = chat;
           if (!chat.historyLoaded) {
-            if (chat.type === 'user'){
+            if (chat.type === 'user') {
               sendMessage(chat.name, null, null, 'loadHistory');
             }
-            else if (chat.type === 'group'){
+            else if (chat.type === 'group') {
               sendMessage(null, chat.name, null, 'loadHistory');
             }
             else {
@@ -360,7 +314,7 @@
           if (this.currentChat.type === 'group') {
             sendMessage(null, this.currentChat.name, this.newMessage);
           } else if (this.currentChat.type === 'user') {
-            this.currentChat.messages.push({type: 'self', text: this.newMessage, date: new Date().toISOString()}); //replay the message 
+            this.currentChat.messages.push({ type: 'self', text: this.newMessage, date: new Date().toISOString() }); //replay the message 
             sendMessage(this.currentChat.name, null, this.newMessage);
           } else if (this.currentChat.type === 'public') {
             sendMessage(null, null, this.newMessage);
@@ -368,7 +322,7 @@
           this.newMessage = '';
         },
         addChat: function (chatType, chatName) {
-          if (chatName && ['public', 'group', 'user'].includes(chatType)){
+          if (chatName && ['public', 'group', 'user'].includes(chatType)) {
             var chat = { type: chatType, name: chatName, messages: [], unread: 0, historyLoaded: false };
             addItem(chat, data.chats);
             return chat;
@@ -390,19 +344,19 @@
           addItem({ type: 'system', text: 'Client: adding ' + user + ' to ' + chat.name }, chat.messages);
           sendMessage(user, chat.name, null, 'add');
         },
-        getChat: function(chatType, chatName) {
+        getChat: function (chatType, chatName) {
           if (['public', 'group', 'user'].includes(chatType)) {
             var chat = this.chats.filter(i => i.type === chatType).find(s => s.name === chatName);
             return chat;
-          } 
-          
+          }
+
           return null;
         },
-        removeChat: function(chatType, chatName){
-            const index = this.chats.find(i => i.type === chatType && i.name === chatName);
-            if (index > -1){
-              this.$delete(this.chats, index);
-            }
+        removeChat: function (chatType, chatName) {
+          const index = this.chats.find(i => i.type === chatType && i.name === chatName);
+          if (index > -1) {
+            this.$delete(this.chats, index);
+          }
         },
         getOrAddChat: function (chatType, chatName) {
           if (['public', 'group', 'user'].includes(chatType)) {
@@ -410,7 +364,7 @@
             if (chat) {
               // update
               return chat;
-            } else{
+            } else {
               // add
               return this.addChat(chatType, chatName);
             }
@@ -454,9 +408,9 @@
 
     function newMessage(message) {
       var chat = app.getOrAddChat(message.chatType || 'public', message.chatName || 'System');
-      if (chat !== app.currentChat){
+      if (chat !== app.currentChat) {
         // add unread mark
-        if (!message.type){
+        if (!message.type) {
           // no type specified, this is a real message
           chat.unread++;
         }
@@ -471,6 +425,38 @@
         elem.scrollTop = elem.scrollHeight;
       }
     };
+
+    function showMessage(message) {
+      if (!message) {
+        return;
+      }
+      if (message.type === 'sync') {
+        if (message.event === 'removeUser') {
+          var chat = app.removeChat('user', message.user);
+        } else if (message.event === 'addUser') {
+          app.getOrAddChat('user', message.user);
+        }
+      } else if (message.type === 'connected') {
+        message.users.forEach(element => {
+          app.getOrAddChat('user', element);
+        });
+        message.groups.forEach(element => {
+          app.getOrAddChat('group', element)
+        })
+        newMessage({ text: 'User ' + message.user + '(' + message.connection + ') logged in', type: 'log' });
+      }
+      else if (message.group) {
+        // group send
+        message.chatType = 'group';
+        message.chatName = message.group;
+      } else if (message.to) {
+        // user send
+        message.chatType = 'user';
+        message.chatName = message.from;
+      }
+
+      newMessage(message);
+    }
 
     function getAxiosConfig() {
       const config = {
@@ -505,11 +491,11 @@
       }
 
       websocket.onmessage = e => {
-        if (!e.data){
+        if (!e.data) {
           return;
         }
         var message = JSON.parse(e.data);
-        if (Array.isArray(message)){
+        if (Array.isArray(message)) {
           message.forEach(element => {
             showMessage(element);
           });
@@ -517,41 +503,7 @@
           showMessage(message)
         }
       }
-
     }).catch(alert);
-
-    function showMessage(message){
-      if (!message) {
-        return;
-      }
-      if (message.type === 'sync'){
-          if (message.event === 'removeUser'){
-            var chat = app.removeChat('user', message.user);
-          } else if (message.event === 'addUser'){
-            app.getOrAddChat('user', message.user);
-          }
-        } else if (message.type === 'connected') {
-          message.users.forEach(element => {
-            app.getOrAddChat('user', element);
-          });
-          message.groups.forEach(element =>{
-            app.getOrAddChat('group', element)
-          })
-          newMessage({ text: 'User ' + message.user + '(' + message.connection + ') logged in', type: 'log' });
-        }
-        else if (message.group){
-          // group send
-          message.chatType = 'group';
-          message.chatName = message.group;
-        } else if (message.to){
-          // user send
-          message.chatType = 'user';
-          message.chatName = message.from;
-        }
-
-        newMessage(message);
-    }
-
   </script>
 </body>
 

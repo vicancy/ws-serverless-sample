@@ -16,7 +16,6 @@ module.exports = function (context, api, table, user, connectionId) {
             };
         },
         send: async function (recipient, message) {
-            const chatKey = getChatKey(recipient);
             const date = new Date().toISOString();
             var content = {
                 to: recipient,
