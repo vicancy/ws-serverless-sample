@@ -14,9 +14,9 @@ var func = module.exports = async function (context, req) {
     // todo: need claims to pass the data
     var connectionId = req.query.connectionId;
     var user = req.query.user;
+
     const api = require('./api')(user, connectionId, url, context);
     const table = require('./storage')(storageConn, context);
-
     if (event === "connect" || event === "disconnect") {
         var connect = require('./events/connect')(context, api, table, user, connectionId)[event];
         await connect();

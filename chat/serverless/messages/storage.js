@@ -21,9 +21,12 @@ module.exports = function (_conn, _context) {
         },
         exec: exec,
         queryChat: async function(chatKey){
+            const chatTable = 'chat';
             query = new azure.TableQuery().where("PartitionKey eq '" + chatKey + "'").select('sentTime', 'content').top(20);
-
-            var chats = (await exec('queryEntities', 'chat', query, null)).entries.map(i => {
+            await exec('createTableIfNotExists', chatTable, t=>{
+                if (t) throw t;
+            });
+            var chats = (await exec('queryEntities', chatTable, query, null)).entries.map(i => {
                 return {
                     time: i.sentTime['_'],
                     content: i.content['_']
