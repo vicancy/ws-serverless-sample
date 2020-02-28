@@ -1,17 +1,36 @@
+const jwt = require('jsonwebtoken');
 const axios = require("axios");
 
 // todo: url from token, error handling when REST api call fails
-module.exports = function (_from, _conn, _url, _context) {
-    _url = _url.substr(-1) === '/' ? _url : _url + '/';
-    _context.log(_url);
+module.exports = function (_from, _connId, _connStr, _context) {
+    if (!_connStr) {
+        throw "ConnectionString should not be empty.";
+    }
+    const host = /Endpoint=(.*?);/g.exec(_connStr)[1];
+    const key = /AccessKey=(.*?);/g.exec(_connStr)[1];
+    const portmatch = /Port=(.*?);/g.exec(_connStr);
+    portSuffix = portmatch ? ':' + portmatch[1] : '';
+
+    var getToken = function (path) {
+        return "Bearer " + jwt.sign({}, key, {
+            issuer: 'chat',
+            subject: _from,
+            audience: host + path,
+            expiresIn: "12h",
+            algorithm: "HS256"
+        });
+    }
+
     return {
         addToGroup: async (user, group) => {
             var log = "Adding " + user + " to group " + group;
-            _context.log(log);
-            _context.log(_url);
-            const response = await axios.put(_url + "ws/api/v1/hubs/chat/groups/" + group + "/users/" + user,
+            var path = "/ws/api/v1/hubs/chat/groups/" + group + "/users/" + user;
+            var url = host + portSuffix + path;
+            var token = getToken(path);
+            _context.log(log + ", url:" + url + ", token:" + token);
+            const response = await axios.put(url,
                 null, {
-
+                headers: { "Authorization": token }
             });
             return {
                 type: 'log',
@@ -21,9 +40,14 @@ module.exports = function (_from, _conn, _url, _context) {
         addConnectionToGroup: async (conn, group) => {
             // PUT /ws/api/v1/hubs/chat/groups/1/connections/123-456
             var log = "Adding " + conn + " to group " + group;
-            _context.log(log);
-            const response = await axios.put(_url + "ws/api/v1/hubs/chat/groups/" + group + "/connections/" + conn,
+            var path = "/ws/api/v1/hubs/chat/groups/" + group + "/connections/" + conn;
+            var url = host + portSuffix + path;
+            var token = getToken(path);
+            _context.log(log + ", url:" + url + ", token:" + token);
+
+            const response = await axios.put(url,
                 null, {
+                headers: { "Authorization": token }
 
             });
             return {
@@ -34,8 +58,14 @@ module.exports = function (_from, _conn, _url, _context) {
         removeFromGroup: async (user, group) => {
             // DELETE /ws/api/v1/hubs/chat/groups/1/users/a
             var log = "Removing " + user + " from group " + group;
-            _context.log(log);
-            const response = await axios.delete(_url + "ws/api/v1/hubs/chat/groups/" + group + "/users/" + user, {});
+            var path = "/ws/api/v1/hubs/chat/groups/" + group + "/users/" + user;
+            var url = host + portSuffix + path;
+            var token = getToken(path);
+            _context.log(log + ", url:" + url + ", token:" + token);
+
+            const response = await axios.delete(url, {
+                headers: { "Authorization": token }
+            });
 
             return {
                 type: 'log',
@@ -45,9 +75,14 @@ module.exports = function (_from, _conn, _url, _context) {
         removeFromAllGroup: async (user) => {
             // DELETE /ws/api/v1/hubs/chat/users/a/groups
             var log = "Removing " + user + " from all groups";
-            _context.log(log);
+            var path = "/ws/api/v1/hubs/chat/users/" + user + "/groups";
+            var url = host + portSuffix + path;
+            var token = getToken(path);
+            _context.log(log + ", url:" + url + ", token:" + token);
 
-            const response = await axios.delete(_url + "ws/api/v1/hubs/chat/users/" + user + "/groups", {});
+            const response = await axios.delete(url, {
+                headers: { "Authorization": token }
+            });
 
             return {
                 type: 'log',
@@ -58,8 +93,14 @@ module.exports = function (_from, _conn, _url, _context) {
             // DELETE /ws/api/v1/hubs/chat/groups/1/connections/a
 
             var log = "Removing " + conn + " from group " + group;
-            _context.log(log);
-            const response = await axios.delete(_url + "ws/api/v1/hubs/chat/groups/" + group + "/connections/" + conn, {});
+            var path = "/ws/api/v1/hubs/chat/groups/" + group + "/connections/" + conn;
+            var url = host + portSuffix + path;
+            var token = getToken(path);
+            _context.log(log + ", url:" + url + ", token:" + token);
+
+            const response = await axios.delete(url, {
+                headers: { "Authorization": token }
+            });
 
             return {
                 type: 'log',
@@ -69,10 +110,14 @@ module.exports = function (_from, _conn, _url, _context) {
         sendToGroup: async (group, content) => {
             // POST /ws/api/v1/hubs/chat/groups/{group}
             const log = "Sending to group " + group + ": " + JSON.stringify(content);
-            _context.log(log);
-            const response = await axios.post(_url + "ws/api/v1/hubs/chat/groups/" + group, content, {
+            const path = "/ws/api/v1/hubs/chat/groups/" + group;
+            var url = host + portSuffix + path;
+            var token = getToken(path);
+            _context.log(log + ", url:" + url + ", token:" + token);
+            const response = await axios.post(url, content, {
                 headers: {
-                    "Content-Type": "application/json"
+                    "Content-Type": "application/json",
+                    "Authorization": token
                 }
             });
 
@@ -84,40 +129,52 @@ module.exports = function (_from, _conn, _url, _context) {
         sendToUser: async (user, content) => {
             // POST /ws/api/v1/hubs/chat/users/{user}
             var log = "Send to user " + user + ": " + JSON.stringify(content);
-            _context.log(log);
-            const response = await axios.post(_url + "ws/api/v1/hubs/chat/users/" + user, content, {
+            var path = "/ws/api/v1/hubs/chat/users/" + user;
+            var url = host + portSuffix + path;
+            var token = getToken(path);
+            _context.log(log + ", url:" + url + ", token:" + token);
+            const response = await axios.post(url, content, {
                 headers: {
-                    "Content-Type": "application/json"
+                    "Content-Type": "application/json",
+                    "Authorization": token
                 }
             });
 
             return {
                 type: 'log',
-                text: log 
+                text: log
             };
         },
         sendToConnection: async (connection, content) => {
             // POST /ws/api/v1/hubs/chat/connections/{connection}
             var log = "Send to connection " + connection + ": " + JSON.stringify(content);
-            _context.log(log);
-            const response = await axios.post(_url + "ws/api/v1/hubs/chat/connections/" + connection, content, {
+            var path = "/ws/api/v1/hubs/chat/connections/" + connection;
+            var url = host + portSuffix + path;
+            var token = getToken(path);
+            _context.log(log + ", url:" + url + ", token:" + token);
+            const response = await axios.post(url, content, {
                 headers: {
-                    "Content-Type": "application/json"
+                    "Content-Type": "application/json",
+                    "Authorization": token
                 }
             });
 
             return {
                 type: 'log',
-                text: log 
+                text: log
             };
         },
         broadcast: async (content) => {
             // POST /ws/api/v1/hubs/chat
             var log = "Broadcast: " + JSON.stringify(content);
-            _context.log(log);
-            const response = await axios.post(_url + "ws/api/v1/hubs/chat", content, {
+            var path = "/ws/api/v1/hubs/chat";
+            var url = host + portSuffix + path;
+            var token = getToken(path);
+            _context.log(log + ", url:" + url + ", token:" + token);
+            const response = await axios.post(url, content, {
                 headers: {
-                    "Content-Type": "application/json"
+                    "Content-Type": "application/json",
+                    "Authorization": token
                 }
             });
 

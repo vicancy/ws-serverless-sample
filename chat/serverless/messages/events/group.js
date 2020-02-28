@@ -34,7 +34,9 @@ module.exports = function (context, api, table, group, user, connectionId) {
                 PartitionKey: { '_': '_usergroups_' + recipient },
                 RowKey: { '_': group },
             }
-            await table.exec('deleteEntity', 'chat', userGroup);
+            try{
+                await table.exec('deleteEntity', 'chat', userGroup);
+            }catch{}
 
             var response = await api.removeFromGroup(recipient, group);
             context.res = {

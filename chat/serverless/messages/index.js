@@ -1,21 +1,25 @@
-let url = "http://localhost:8080";
-const conn = process.env["AzureSignalRConnectionString"];
+const conn = process.env["AzureSignalRConnectionString"] || "Endpoint=http://localhost;AccessKey=ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789ABCDEFGH;Port=8080;Version=1.0;";
 const storageConn = process.env["AzureWebJobsStorage"] || "UseDevelopmentStorage=true";
-
-if (conn) {
-    const host = /Endpoint=(.*?);/g.exec(conn)[1];
-    const portmatch = /Port=(.*?);/g.exec(conn);
-    const portSuffix = portmatch ? ':' + portmatch[1] : '';
-    url = host + portSuffix;
-}
 
 var func = module.exports = async function (context, req) {
     var event = req.query.event;
     // todo: need claims to pass the data
-    var connectionId = req.query.connectionId;
-    var user = req.query.user;
+    var connectionId = req.headers['x-asrs-connection-id'];
+    var user = req.headers['x-asrs-user-id'];
+    if (!connectionId || !user || !event){
+        context.res = {
+            status: 400,
+            body: {
+                type: 'error',
+                code: 400,
+                text: "Bad request."
+            }
+        } 
+        return;
+    }
 
-    const api = require('./api')(user, connectionId, url, context);
+    context.log(req);
+    const api = require('./api')(user, connectionId, conn, context);
     const table = require('./storage')(storageConn, context);
     if (event === "connect" || event === "disconnect") {
         var connect = require('./events/connect')(context, api, table, user, connectionId)[event];
@@ -80,9 +84,12 @@ var req = {
     },
     body: {
         text: "Hello world",
-        action: "loadHistory",
-        group: "group1",
-        recipient: "_chats_group_group1"
+        action: "add",
+        group: "_chats_group_group1"
     }
 };
+req.headers = {
+        'x-asrs-connection-id': req.query.connectionId,
+        'x-asrs-user-id': req.query.user
+    };
 func(context, req);

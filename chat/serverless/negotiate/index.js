@@ -1,14 +1,14 @@
 const jwt = require('jsonwebtoken');
 const uri = require('url');
 
-const conn = process.env["AzureSignalRConnectionString"] || 'Endpoint=http://localhost;AccessKey=ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789;Port=8080;Version=1.0;';
+const conn = process.env["AzureSignalRConnectionString"] || 'Endpoint=http://localhost;AccessKey=ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789ABCDEFGH;Port=8080;Version=1.0;';
 const key = /AccessKey=(.*?);/g.exec(conn)[1];
 const endpoint = /Endpoint=(.*?);/g.exec(conn)[1];
 const portmatch = /Port=(.*?);/g.exec(conn);
 const port = portmatch ? ':' + portmatch[1] : '';
 const audience = endpoint + '/ws/client/';
 const url = endpoint.replace('http', 'ws') + port + '/ws/client/?hub=chat&serverless=true';
-
+const upstreamUrl = process.env["UpstreamUrl"] || 'http://localhost:7071/api/messages?event={event}';
 var func = module.exports = async function (context, req) {
     const user = (req.headers["x-ms-client-principal-name"]) || req.query.name || (req.body && req.body.name);
     if (user) {
@@ -21,10 +21,8 @@ var func = module.exports = async function (context, req) {
         };
 
         // todo: which one can be trusted?
-        var urlparts = uri.parse(req.originalUrl);
         const payload = {
-            "asrs.s.rfh": urlparts.protocol + '//' + urlparts.host,
-            //"asrs.s.rfh": 'https://lianwei-wsmessages.azurewebsites.net/',
+            "asrs.s.rfh": upstreamUrl,
         };
 
         const token = jwt.sign(payload, key, options);
