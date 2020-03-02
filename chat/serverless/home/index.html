@@ -479,8 +479,9 @@
 
       data.ready = true;
 
-      var websocket = data.websocket = new WebSocket(url);
+      var websocket = data.websocket = new WebSocket(url, ['protocol1', 'protocol2']);
       websocket.onopen = e => {
+        console.log(websocket.protocol);
         newMessage({ text: "Connect dectected from client", type: 'system' });
       }
       websocket.onclose = e => {

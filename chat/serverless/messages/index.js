@@ -6,7 +6,8 @@ var func = module.exports = async function (context, req) {
     // todo: need claims to pass the data
     var connectionId = req.headers['x-asrs-connection-id'];
     var user = req.headers['x-asrs-user-id'];
-    if (!connectionId || !user || !event){
+    
+    if (!event){
         context.res = {
             status: 400,
             body: {
@@ -18,7 +19,30 @@ var func = module.exports = async function (context, req) {
         return;
     }
 
-    context.log(req);
+    // Handshake event
+    if (event === "handshake"){
+        context.log(req.headers);
+        context.res = {
+            status: 200,
+            headers: {
+                'sec-websocket-protocol': 'protocol1'
+            }
+        }
+        return;
+    }
+    
+    if (!connectionId || !user){
+        context.res = {
+            status: 400,
+            body: {
+                type: 'error',
+                code: 400,
+                text: "Bad request."
+            }
+        } 
+        return;
+    }
+
     const api = require('./api')(user, connectionId, conn, context);
     const table = require('./storage')(storageConn, context);
     if (event === "connect" || event === "disconnect") {

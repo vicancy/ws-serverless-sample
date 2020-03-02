@@ -41,20 +41,6 @@ var func = module.exports = async function (context, req) {
     }
 };
 
-async function queryEntities(tableService, ...args) {
-    return new Promise((resolve, reject) => {
-        let promiseHandling = (err, result) => {
-            if (err) {
-                reject(err);
-            } else {
-                resolve(result);
-            }
-        };
-        args.push(promiseHandling);
-        tableService.queryEntities.apply(tableService, args);
-    });
-};
-
 // for local test
 var context = {
     res: { body: "" },
