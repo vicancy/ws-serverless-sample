@@ -23,12 +23,15 @@ The Upstream URL pattern has 3 supported parameters, `{event}`, `{hub}`, `{categ
 
 |Event  | {event} | {category} |
 |-----------| -------------| ----------------|
+|Handshake| `handshake`|`connections` |
 |Connect | `connect` | `connections` |
 |Message | `message` | `messages` |
 |Disconnect | `disconnect` | `connections` |
 
 ## The Function to handle incoming WebSocket requests
-After the client established WebSocket connection with Azure SignalR Service. Every WebSocket frame triggers a HTTP request to the Upstream URL. The following headers are added by Azure SignalR Service so that the Function can read the info from the request headers:
+Before the WebSocket connection is established, a `handshake` event is triggered, providing the Function the ability to Auth the user or reject the user or select the **subprotocol** for the WebSocket connection. The **subprotocol** of the incoming request is set inside the header `Sec-WebSocket-Protocol`. As defined in the WebSocket spec, the header can be set multiple times, and the Function should be responsible for setting the response `Sec-WebSocket-Protocol` header of one selected protocol.
+
+If the `handshake` event returns success code and the connection is successfully established, a HTTP request with `connect` event is triggered in the Function side. After that, every WebSocket frame triggers a HTTP request to the Upstream URL. The following headers are added by Azure SignalR Service so that the Function can read the info from the request headers:
 
 * `X-ASRS-Hub`: `{hubname}`
 * `X-ASRS-Category`: `connections`
