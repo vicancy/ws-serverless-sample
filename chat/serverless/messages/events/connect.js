@@ -29,6 +29,9 @@ module.exports = function (context, api, table, user, connectionId) {
             var groups = (await table.exec('queryEntities', 'chat', userGroupQuery, null)).entries.map(i => i.group['_']).sort();
 
             context.res = {
+                headers: {
+                    'sec-websocket-protocol': 'protocol1'
+                },
                 body: {
                     type: 'connected',
                     users: users,

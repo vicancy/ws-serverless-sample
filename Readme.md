@@ -23,15 +23,14 @@ The Upstream URL pattern has 3 supported parameters, `{event}`, `{hub}`, `{categ
 
 |Event  | {event} | {category} |
 |-----------| -------------| ----------------|
-|Handshake| `handshake`|`connections` |
 |Connect | `connect` | `connections` |
 |Message | `message` | `messages` |
 |Disconnect | `disconnect` | `connections` |
 
 ## The Function to handle incoming WebSocket requests
-Before the WebSocket connection is established, a `handshake` event is triggered, providing the Function the ability to Auth the user or reject the user or select the **subprotocol** for the WebSocket connection. The **subprotocol** of the incoming request is set inside the header `Sec-WebSocket-Protocol`. As defined in the WebSocket spec, the header can be set multiple times, and the Function should be responsible for setting the response `Sec-WebSocket-Protocol` header of one selected protocol.
+Before the WebSocket connection is established, the `connect` event is triggered, providing the Function the ability to Auth the user or reject the user or select the **subprotocol** for the WebSocket connection. The **subprotocol** of the incoming request is set inside the header `Sec-WebSocket-Protocol`. As defined in the WebSocket spec, the header can be set multiple times, and the Function should be responsible for setting the response `Sec-WebSocket-Protocol` header of one selected protocol.
 
-If the `handshake` event returns success code and the connection is successfully established, a HTTP request with `connect` event is triggered in the Function side. After that, every WebSocket frame triggers a HTTP request to the Upstream URL. The following headers are added by Azure SignalR Service so that the Function can read the info from the request headers:
+If the `connect` event returns success code, Azure SignalR Service will establish the real WebSocket connection with client. After that, every WebSocket frame triggers a HTTP request to the Upstream URL. The following headers are added by Azure SignalR Service so that the Function can read the info from the request headers:
 
 * `X-ASRS-Hub`: `{hubname}`
 * `X-ASRS-Category`: `connections`
@@ -39,7 +38,7 @@ If the `handshake` event returns success code and the connection is successfully
 * `X-ASRS-Event`: `connect`
 * `X-ASRS-User-Id`: `{user-id}`
 * `X-ASRS-User-Claims`: `{user-claims}`
-* `X-ASRS-Signature`: `sha256={request-hash-primary},sha256={request-hash-secondary}`
+* `X-ASRS-Signature`: `sha256={connection-id-hash-primary},sha256={connection-id-hash-secondary}`
 * `X-ASRS-Client-Query-String?`: `{query-string}` 
 
 In this Function, it reads payloads from the incoming request, the response of the incoming request will be delivered to the client by Azure SignalR service. Also, Azure SignalR Service provides REST APIs to handle the WebSocket connections:

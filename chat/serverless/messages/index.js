@@ -7,31 +7,9 @@ var func = module.exports = async function (context, req) {
     var connectionId = req.headers['x-asrs-connection-id'];
     var user = req.headers['x-asrs-user-id'];
     
-    if (!event){
-        context.res = {
-            status: 400,
-            body: {
-                type: 'error',
-                code: 400,
-                text: "Bad request."
-            }
-        } 
-        return;
-    }
-
-    // Handshake event
-    if (event === "handshake"){
-        context.log(req.headers);
-        context.res = {
-            status: 200,
-            headers: {
-                'sec-websocket-protocol': 'protocol1'
-            }
-        }
-        return;
-    }
+    context.log(req);
     
-    if (!connectionId || !user){
+    if (!connectionId || !user || !event){
         context.res = {
             status: 400,
             body: {
