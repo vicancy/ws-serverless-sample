@@ -8,11 +8,11 @@
   <meta name="author" content="lianwei">
 
   <title>Serverless WebSocket Chat</title>
-  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNTMiIGhlaWdodD0iNTYiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgeG1sbnM6eGxpbms9Imh0dHA6Ly93d3cudzMub3JnLzE5OTkveGxpbmsiIG92ZXJmbG93PSJoaWRkZW4iPjxkZWZzPjxjbGlwUGF0aCBpZD0iY2xpcDAiPjxwYXRoIGQ9Ik0yMTcgMTE5IDI3MCAxMTkgMjcwIDE3NSAyMTcgMTc1WiIgZmlsbC1ydWxlPSJldmVub2RkIiBjbGlwLXJ1bGU9ImV2ZW5vZGQiLz48L2NsaXBQYXRoPjxsaW5lYXJHcmFkaWVudCB4MT0iMjQzLjUiIHkxPSIxMjAuNSIgeDI9IjI0My41IiB5Mj0iMTcwLjUiIGdyYWRpZW50VW5pdHM9InVzZXJTcGFjZU9uVXNlIiBzcHJlYWRNZXRob2Q9InJlZmxlY3QiIGlkPSJmaWxsMSI+PHN0b3Agb2Zmc2V0PSIwIiBzdG9wLWNvbG9yPSIjOTU5M0NFIi8+PHN0b3Agb2Zmc2V0PSIwLjUiIHN0b3AtY29sb3I9IiM4NDgxQ0EiLz48c3RvcCBvZmZzZXQ9IjEiIHN0b3AtY29sb3I9IiM3MTZEQjciLz48L2xpbmVhckdyYWRpZW50PjwvZGVmcz48ZyBjbGlwLXBhdGg9InVybCgjY2xpcDApIiB0cmFuc2Zvcm09InRyYW5zbGF0ZSgtMjE3IC0xMTkpIj48cGF0aCBkPSJNMjE4LjUgMTUyLjY1NSAyMjMuNDUyIDEzMC40MDMgMjQzLjUgMTIwLjUgMjYzLjU0OCAxMzAuNDAzIDI2OC41IDE1Mi42NTUgMjU0LjYyNiAxNzAuNSAyMzIuMzc0IDE3MC41WiIgc3Ryb2tlPSIjODc4NEM3IiBzdHJva2UtbWl0ZXJsaW1pdD0iOCIgZmlsbD0idXJsKCNmaWxsMSkiIGZpbGwtcnVsZT0iZXZlbm9kZCIvPjx0ZXh0IGZpbGw9IiNGRkZGRkYiIGZvbnQtZmFtaWx5PSJCb2RvbmkgTVQsQm9kb25pIE1UX01TRm9udFNlcnZpY2Usc2Fucy1zZXJpZiIgZm9udC13ZWlnaHQ9IjkwMCIgZm9udC1zaXplPSIyNCIgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoMjM0Ljg0NyAxNTQpIj5DPC90ZXh0PjwvZz48L3N2Zz4=">
-  
+  <link rel="icon" type="image/svg+xml"
+    href="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNTMiIGhlaWdodD0iNTYiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgeG1sbnM6eGxpbms9Imh0dHA6Ly93d3cudzMub3JnLzE5OTkveGxpbmsiIG92ZXJmbG93PSJoaWRkZW4iPjxkZWZzPjxjbGlwUGF0aCBpZD0iY2xpcDAiPjxwYXRoIGQ9Ik0yMTcgMTE5IDI3MCAxMTkgMjcwIDE3NSAyMTcgMTc1WiIgZmlsbC1ydWxlPSJldmVub2RkIiBjbGlwLXJ1bGU9ImV2ZW5vZGQiLz48L2NsaXBQYXRoPjxsaW5lYXJHcmFkaWVudCB4MT0iMjQzLjUiIHkxPSIxMjAuNSIgeDI9IjI0My41IiB5Mj0iMTcwLjUiIGdyYWRpZW50VW5pdHM9InVzZXJTcGFjZU9uVXNlIiBzcHJlYWRNZXRob2Q9InJlZmxlY3QiIGlkPSJmaWxsMSI+PHN0b3Agb2Zmc2V0PSIwIiBzdG9wLWNvbG9yPSIjOTU5M0NFIi8+PHN0b3Agb2Zmc2V0PSIwLjUiIHN0b3AtY29sb3I9IiM4NDgxQ0EiLz48c3RvcCBvZmZzZXQ9IjEiIHN0b3AtY29sb3I9IiM3MTZEQjciLz48L2xpbmVhckdyYWRpZW50PjwvZGVmcz48ZyBjbGlwLXBhdGg9InVybCgjY2xpcDApIiB0cmFuc2Zvcm09InRyYW5zbGF0ZSgtMjE3IC0xMTkpIj48cGF0aCBkPSJNMjE4LjUgMTUyLjY1NSAyMjMuNDUyIDEzMC40MDMgMjQzLjUgMTIwLjUgMjYzLjU0OCAxMzAuNDAzIDI2OC41IDE1Mi42NTUgMjU0LjYyNiAxNzAuNSAyMzIuMzc0IDE3MC41WiIgc3Ryb2tlPSIjODc4NEM3IiBzdHJva2UtbWl0ZXJsaW1pdD0iOCIgZmlsbD0idXJsKCNmaWxsMSkiIGZpbGwtcnVsZT0iZXZlbm9kZCIvPjx0ZXh0IGZpbGw9IiNGRkZGRkYiIGZvbnQtZmFtaWx5PSJCb2RvbmkgTVQsQm9kb25pIE1UX01TRm9udFNlcnZpY2Usc2Fucy1zZXJpZiIgZm9udC13ZWlnaHQ9IjkwMCIgZm9udC1zaXplPSIyNCIgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoMjM0Ljg0NyAxNTQpIj5DPC90ZXh0PjwvZz48L3N2Zz4=">
+
   <script src="https://unpkg.com/feather-icons"></script>
-   
-  <script>window.baseUrl = '%%%____URL____%%%'</script>
+
   <!-- Bootstrap core CSS -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.1.3/dist/css/bootstrap.min.css">
 
@@ -180,7 +180,7 @@
       </nav>
 
       <main role="main" class="col d-flex flex-column flex-nowrap p-md-4 p-2">
-        <div >
+        <div>
           <h1 v-if="currentChat!=null" class="h2">Chat with {{currentChat.name}}</h1>
           <div class="btn-toolbar mb-2 mb-md-0">
             <button v-if="currentChat!=null && currentChat.type === 'group'" type="button" id="dropdownMenuButton"
@@ -233,14 +233,14 @@
           </template>
         </div>
         <div>
-            <br/>
-            <form v-on:submit.prevent="sendNewMessage()">
-              <div class="input-group">
-                <input type="text" v-model="newMessage" class="form-control" placeholder="Send a message">
-                <button type="submit" class="btn btn-outline-secondary col-2 col-md-1" :disabled="!newMessage"><i
-                    data-feather="send"></i></button>
-              </div>
-            </form>
+          <br />
+          <form v-on:submit.prevent="sendNewMessage()">
+            <div class="input-group">
+              <input type="text" v-model="newMessage" class="form-control" placeholder="Send a message">
+              <button type="submit" class="btn btn-outline-secondary col-2 col-md-1" :disabled="!newMessage"><i
+                  data-feather="send"></i></button>
+            </div>
+          </form>
         </div>
 
       </main>
@@ -466,46 +466,43 @@
       return config;
     }
 
-    function negotiate() {
-      return axios.post((window.baseUrl || '') + `/api/negotiate?name=${data.username}`, null, getAxiosConfig())
-        .then(resp => resp.data);
-    }
-
     newMessage({ text: "Connecting...", type: 'system' });
 
     data.currentChat = data.chats[0];
 
-    negotiate().then(info => {
-      var url = info.url;
+    var url = '%%%____URL____%%%';
 
-      data.ready = true;
+    if (!url) {
+      throw "url not specified!";
+    }
 
-      var websocket = data.websocket = new WebSocket(url, ['protocol1', 'protocol2']);
-      websocket.onopen = e => {
-        console.log(websocket.protocol);
-        newMessage({ text: "Connect dectected from client", type: 'system' });
-      }
-      websocket.onclose = e => {
-        newMessage({ text: "Disconnect detected from client", type: 'system' });
-      }
-      websocket.onerror = e => {
-        newMessage({ text: "Error detected from client " + e.data, type: 'system' });
-      }
+    data.ready = true;
 
-      websocket.onmessage = e => {
-        if (!e.data) {
-          return;
-        }
-        var message = JSON.parse(e.data);
-        if (Array.isArray(message)) {
-          message.forEach(element => {
-            showMessage(element);
-          });
-        } else {
-          showMessage(message)
-        }
+    var websocket = data.websocket = new WebSocket(url, ['protocol1', 'protocol2']);
+    websocket.onopen = e => {
+      console.log(websocket.protocol);
+      newMessage({ text: "Connect dectected from client", type: 'system' });
+    }
+    websocket.onclose = e => {
+      newMessage({ text: "Disconnect detected from client", type: 'system' });
+    }
+    websocket.onerror = e => {
+      newMessage({ text: "Error detected from client " + e.data, type: 'system' });
+    }
+
+    websocket.onmessage = e => {
+      if (!e.data) {
+        return;
       }
-    }).catch(alert);
+      var message = JSON.parse(e.data);
+      if (Array.isArray(message)) {
+        message.forEach(element => {
+          showMessage(element);
+        });
+      } else {
+        showMessage(message)
+      }
+    }
   </script>
 </body>
 

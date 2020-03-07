@@ -1,4 +1,3 @@
-const conn = process.env["AzureSignalRConnectionString"] || "Endpoint=http://localhost;AccessKey=ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789ABCDEFGH;Port=8080;Version=1.0;";
 const storageConn = process.env["AzureWebJobsStorage"] || "UseDevelopmentStorage=true";
 
 var func = module.exports = async function (context, req) {
@@ -21,7 +20,7 @@ var func = module.exports = async function (context, req) {
         return;
     }
 
-    const api = require('./api')(user, connectionId, conn, context);
+    const api = require('./api')(user, connectionId, context);
     const table = require('./storage')(storageConn, context);
     if (event === "connect" || event === "disconnect") {
         var connect = require('./events/connect')(context, api, table, user, connectionId)[event];

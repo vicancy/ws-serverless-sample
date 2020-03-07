@@ -7,7 +7,7 @@ const endpoint = /Endpoint=(.*?);/g.exec(conn)[1];
 const portmatch = /Port=(.*?);/g.exec(conn);
 const port = portmatch ? ':' + portmatch[1] : '';
 const audience = endpoint + '/ws/client/';
-const url = endpoint.replace('http', 'ws') + port + '/ws/client/?hub=chat&serverless=true';
+const url = endpoint.replace('http', 'ws') + port + '?hub=chat&serverless=true';
 const upstreamUrl = process.env["UpstreamUrl"] || 'http://localhost:7071/api/messages?event={event}';
 var func = module.exports = async function (context, req) {
     const user = (req.headers["x-ms-client-principal-name"]) || req.query.name || (req.body && req.body.name);
