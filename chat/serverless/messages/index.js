@@ -1,5 +1,6 @@
 const storageConn = process.env["AzureWebJobsStorage"] || "UseDevelopmentStorage=true";
-
+// URLSearchParams is not recognizable in Azure Functions, import a polyfill
+const URLSearchParams = require('url-search-params');
 var func = module.exports = async function (context, req) {
     var event = req.query.event;
     // todo: need claims to pass the data
@@ -13,7 +14,6 @@ var func = module.exports = async function (context, req) {
         context.res = { status: 400 }
         return;
     }
-
     if (!user) {
         // try to auth user
         if (event === "connect") {
@@ -83,26 +83,3 @@ var func = module.exports = async function (context, req) {
         await broadcast.broadcast(message.text);
     }
 };
-
-// for local test
-var context = {
-    res: { body: "" },
-    log: console.log,
-    bindingData: {}
-};
-var req = {
-    query: {
-        user: "user1",
-        connectionId: new Date().toISOString(),
-    },
-    body: {
-        text: "Hello world",
-        action: "add",
-        group: "_chats_group_group1"
-    }
-};
-context.bindingData.headers = req.headers = {
-    'x-asrs-connection-id': req.query.connectionId,
-    'x-asrs-user-id': req.query.user
-};
-func(context, req);

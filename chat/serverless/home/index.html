@@ -140,7 +140,7 @@
             <li class="nav-item" v-bind:class="{active: currentChat === chat}">
               <a class="nav-link" href="#" v-on:click.prevent="setCurrentChat(chat)">
                 <span data-feather="coffee"></span>
-                {{chat.name}}<span v-if="chat.unread > 0" class="ml-4 badge badge-danger">{{chat.unread}}</span>
+               {{chat.name}}<span v-if="chat.unread > 0" class="ml-4 badge badge-danger">{{chat.unread}}</span>
               </a>
             </li>
           </ul>
@@ -259,7 +259,6 @@
     crossorigin="anonymous"></script>
 
   <script src="https://cdn.jsdelivr.net/npm/vue@2.5.17/dist/vue.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/axios@0.18.0/dist/axios.min.js"></script>
   <script>
     const data = {
       websocket: null,
@@ -271,7 +270,7 @@
       addingGroup: false,
       currentChat: null,
       chats: [],
-      _counter: 0
+      counter: 0
     };
     const app = new Vue({
       el: '#app',
@@ -421,6 +420,10 @@
 
     function processRecieved(message) {
       if (!message) {
+        return;
+      }
+      if (message.type === 'log') {
+        app.log(message.text);
         return;
       }
       if (message.type === 'sync') {

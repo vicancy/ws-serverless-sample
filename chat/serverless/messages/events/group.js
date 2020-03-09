@@ -36,7 +36,7 @@ module.exports = function (context, api, table, group, user, connectionId) {
             }
             try{
                 await table.exec('deleteEntity', 'chat', userGroup);
-            }catch{}
+            }catch (err) {}
 
             var response = await api.removeFromGroup(recipient, group);
             context.res = {
