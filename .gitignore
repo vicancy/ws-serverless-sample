@@ -1,7 +1,7 @@
 ###
 OneBranch Specific
 ###
-remote.settings.json
+*.settings.json
 # Build generated files in src
 src/**/objd/**/*
 src/**/obj/**/*

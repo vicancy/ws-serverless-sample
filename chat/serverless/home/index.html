@@ -149,7 +149,6 @@
             <span><i data-feather="layers" class="mr-1"></i>Group Chat</span>
             <a class="d-flex align-items-center" href="#"> </a>
             <a href="#" v-on:click.prevent="addingGroup = !addingGroup"><span data-feather="plus-circle"></span></a>
-
           </h4>
 
           <form :hidden="!addingGroup" v-on:submit.prevent="addGroupChat(addingGroupName)">
@@ -189,7 +188,7 @@
               <span data-feather="plus"></span>
             </button>
             <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
-              <template v-for="user in otherUsers" v-bind:key="user.id">
+              <template v-for="user in userChats" v-bind:key="user.id">
                 <button class="dropdown-item"
                   v-on:click.prevent="addUserToGroup(currentChat, user.name)">{{user.name}}</button>
               </template>
@@ -271,15 +270,13 @@
       addingGroupName: '',
       addingGroup: false,
       currentChat: null,
-      chats: []
+      chats: [],
+      _counter: 0
     };
     const app = new Vue({
       el: '#app',
       data: data,
       computed: {
-        otherUsers: function () {
-          return this.userChats;
-        },
         userChats: function () {
           return this.chats.filter(i => i.type === 'user' && i.name !== this.username);
         },
@@ -295,37 +292,33 @@
           chat.unread = 0;
           this.currentChat = chat;
           if (!chat.historyLoaded) {
-            if (chat.type === 'user') {
-              sendMessage(chat.name, null, null, 'loadHistory');
-            }
-            else if (chat.type === 'group') {
-              sendMessage(null, chat.name, null, 'loadHistory');
-            }
-            else {
-              // broadcast
-              sendMessage(null, null, null, 'loadHistory');
-            }
+            var user = chat.type === 'user' ? chat.name : null;
+            var group = chat.type === 'group' ? chat.name : null;
+            this.actionToServer('load', user, group);
             chat.historyLoaded = true;
           }
         },
         sendNewMessage: function () {
-          if (!this.currentChat || !this.newMessage) {
+          var chat = this.currentChat;
+          if (!chat || !this.newMessage) {
             console.error("Empty message");
           }
-          if (this.currentChat.type === 'group') {
-            sendMessage(null, this.currentChat.name, this.newMessage);
-          } else if (this.currentChat.type === 'user') {
+
+          var user = chat.type === 'user' ? chat.name : null;
+          var group = chat.type === 'group' ? chat.name : null;
+          this.sendToServer(this.newMessage, user, group);
+
+          if (user) {
+            // replay the message
             this.currentChat.messages.push({ type: 'self', text: this.newMessage, date: new Date().toISOString() }); //replay the message 
-            sendMessage(this.currentChat.name, null, this.newMessage);
-          } else if (this.currentChat.type === 'public') {
-            sendMessage(null, null, this.newMessage);
           }
+
           this.newMessage = '';
         },
         addChat: function (chatType, chatName) {
           if (chatName && ['public', 'group', 'user'].includes(chatType)) {
             var chat = { type: chatType, name: chatName, messages: [], unread: 0, historyLoaded: false };
-            addItem(chat, data.chats);
+            this.addItem(chat, data.chats);
             return chat;
           } else {
             console.error("Invalid input: chat type: " + chatType + " chat name: " + chatName);
@@ -338,12 +331,13 @@
             this.currentChat = chat;
             this.addingGroupName = '';
             this.addingGroup = false;
-            addGroup(null, null, group);
+            this.actionToServer('add', null, group);
           }
         },
         addUserToGroup: function (chat, user) {
-          addItem({ type: 'system', text: 'Client: adding ' + user + ' to ' + chat.name }, chat.messages);
-          sendMessage(user, chat.name, null, 'add');
+          this.addItem({ type: 'system', text: 'Client: adding ' + user + ' to ' + chat.name }, chat.messages);
+
+          this.actionToServer('add', user, chat.name);
         },
         getChat: function (chatType, chatName) {
           if (['public', 'group', 'user'].includes(chatType)) {
@@ -372,62 +366,60 @@
           } else {
             console.error("Unknown chat type: " + chatType);
           }
-        }
+        },
+        addItem(item, owner) {
+          item.id = this.counter++; // vue transitions need an id
+          owner.push(item);
+        },
+        actionToServer(action = 'send', user = null, group = null) {
+          // a simple chat protocol 
+          // when group is set: load, add, remove, send(text)
+          // when recipient is set: load, send(text), add(to group), remove(from group)
+          // when broadcast: load, send(text)
+          this.websocket.send(JSON.stringify(
+            {
+              action: action,
+              recipient: user,
+              group: group,
+            }
+          ));
+        },
+        sendToServer(content, user = null, group = null) {
+          this.websocket.send(JSON.stringify(
+            {
+              action: 'send',
+              recipient: user,
+              group: group,
+              text: content,
+            }
+          ));
+        },
+        addMessageToView(message) {
+          var chat = this.getOrAddChat(message.chatType || 'public', message.chatName || 'System');
+          if (chat !== this.currentChat) {
+            // add unread mark
+            if (!message.type) {
+              // no type specified, this is a real message
+              chat.unread++;
+            }
+          } else {
+            chat.unread = 0;
+          }
+          this.addItem(message, chat.messages);
+
+          // todo: not that work because the dom is rendered later, use binding?
+          var elem = document.getElementById('chat');
+          if (elem) {
+            elem.scrollTop = elem.scrollHeight;
+          }
+        },
+        log(content) {
+          this.addMessageToView({ text: content, type: 'system' });
+        },
       }
     });
 
-    function sendMessage(recipient, group, messageText, action) {
-      data.websocket.send(JSON.stringify({
-        recipient: recipient,
-        group: group,
-        text: messageText,
-        action: action
-      }));
-    }
-    function addGroup(recipient, connectionId, group) {
-      data.websocket.send(JSON.stringify({
-        action: "add",
-        connectionId: connectionId,
-        recipient: recipient,
-        group: group
-      }));
-    }
-    function removeGroup(recipient, connectionId, group) {
-      data.websocket.send(JSON.stringify({
-        action: "remove",
-        connectionId: connectionId,
-        recipient: recipient,
-        group: group
-      }));
-    }
-
-    let counter = 0;
-    function addItem(item, owner) {
-      item.id = counter++; // vue transitions need an id
-      owner.push(item);
-    }
-
-    function newMessage(message) {
-      var chat = app.getOrAddChat(message.chatType || 'public', message.chatName || 'System');
-      if (chat !== app.currentChat) {
-        // add unread mark
-        if (!message.type) {
-          // no type specified, this is a real message
-          chat.unread++;
-        }
-      } else {
-        chat.unread = 0;
-      }
-      addItem(message, chat.messages);
-
-      // todo: not that work because the dom is rendered later, use binding?
-      var elem = document.getElementById('chat');
-      if (elem) {
-        elem.scrollTop = elem.scrollHeight;
-      }
-    };
-
-    function showMessage(message) {
+    function processRecieved(message) {
       if (!message) {
         return;
       }
@@ -444,7 +436,7 @@
         message.groups.forEach(element => {
           app.getOrAddChat('group', element)
         })
-        newMessage({ text: 'User ' + message.user + '(' + message.connection + ') logged in', type: 'log' });
+        app.addMessageToView({ text: 'User ' + message.user + '(' + message.connection + ') logged in', type: 'log' });
       }
       else if (message.group) {
         // group send
@@ -456,17 +448,10 @@
         message.chatName = message.from;
       }
 
-      newMessage(message);
+      app.addMessageToView(message);
     }
 
-    function getAxiosConfig() {
-      const config = {
-        headers: { 'x-ms-signalr-userid': data.username },
-      };
-      return config;
-    }
-
-    newMessage({ text: "Connecting...", type: 'system' });
+    app.log("Connecting...");
 
     data.currentChat = data.chats[0];
 
@@ -481,13 +466,13 @@
     var websocket = data.websocket = new WebSocket(url, ['protocol1', 'protocol2']);
     websocket.onopen = e => {
       console.log(websocket.protocol);
-      newMessage({ text: "Connect dectected from client", type: 'system' });
+      app.log("client websocket opened.");
     }
     websocket.onclose = e => {
-      newMessage({ text: "Disconnect detected from client", type: 'system' });
+      app.log("client websocket closed.");
     }
     websocket.onerror = e => {
-      newMessage({ text: "Error detected from client " + e.data, type: 'system' });
+      app.log("client websocket error: " + e.data);
     }
 
     websocket.onmessage = e => {
@@ -497,10 +482,10 @@
       var message = JSON.parse(e.data);
       if (Array.isArray(message)) {
         message.forEach(element => {
-          showMessage(element);
+          processRecieved(element);
         });
       } else {
-        showMessage(message)
+        processRecieved(message)
       }
     }
   </script>

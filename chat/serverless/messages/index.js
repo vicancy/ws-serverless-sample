@@ -56,7 +56,7 @@ var func = module.exports = async function (context, req) {
     if (message.group) {
         var group = require('./events/group')(context, api, table, message.group, user, connectionId);
         const recipient = message.recipient || user;
-        if (message.action === 'loadHistory') {
+        if (message.action === 'load') {
             await group.loadHistory();
             return;
         }
@@ -68,7 +68,7 @@ var func = module.exports = async function (context, req) {
         }
     } else if (message.recipient) {
         var user = require('./events/user')(context, api, table, user, connectionId);
-        if (message.action === 'loadHistory') {
+        if (message.action === 'load') {
             await user.loadHistory(message.recipient);
             return;
         }
@@ -76,7 +76,7 @@ var func = module.exports = async function (context, req) {
     }
     else {
         var broadcast = require('./events/broadcast')(context, api, table, user, connectionId);
-        if (message.action === 'loadHistory') {
+        if (message.action === 'load') {
             await broadcast.loadHistory();
             return;
         }
