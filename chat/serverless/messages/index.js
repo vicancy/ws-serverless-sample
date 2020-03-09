@@ -3,21 +3,32 @@ const storageConn = process.env["AzureWebJobsStorage"] || "UseDevelopmentStorage
 var func = module.exports = async function (context, req) {
     var event = req.query.event;
     // todo: need claims to pass the data
-    var connectionId = req.headers['x-asrs-connection-id'];
-    var user = req.headers['x-asrs-user-id'];
-    
+    // due to bug https://github.com/Azure/azure-functions-nodejs-worker/issues/274
+    var connectionId = context.bindingData.headers['x-ASRS-Connection-Id'];
+    var user = context.bindingData.headers['x-ASRS-User-Id'];
+
     context.log(req);
-    
-    if (!connectionId || !user || !event){
-        context.res = {
-            status: 400,
-            body: {
-                type: 'error',
-                code: 400,
-                text: "Bad request."
-            }
-        } 
+
+    if (!connectionId || !event) {
+        context.res = { status: 400 }
         return;
+    }
+
+    if (!user) {
+        // try to auth user
+        if (event === "connect") {
+            // read the auth from the query string for demo
+            var request = new URLSearchParams(context.bindingData.headers['x-ASRS-Client-Query']);
+            var user = request.get('user');
+            if (!user) {
+                context.res = { status: 401 }
+                return;
+            }
+            
+        }else {
+            context.res = { status: 401 }
+            return;
+        }
     }
 
     const api = require('./api')(user, connectionId, context);
@@ -45,7 +56,7 @@ var func = module.exports = async function (context, req) {
     if (message.group) {
         var group = require('./events/group')(context, api, table, message.group, user, connectionId);
         const recipient = message.recipient || user;
-        if (message.action === 'loadHistory'){
+        if (message.action === 'loadHistory') {
             await group.loadHistory();
             return;
         }
@@ -57,7 +68,7 @@ var func = module.exports = async function (context, req) {
         }
     } else if (message.recipient) {
         var user = require('./events/user')(context, api, table, user, connectionId);
-        if (message.action === 'loadHistory'){
+        if (message.action === 'loadHistory') {
             await user.loadHistory(message.recipient);
             return;
         }
@@ -65,7 +76,7 @@ var func = module.exports = async function (context, req) {
     }
     else {
         var broadcast = require('./events/broadcast')(context, api, table, user, connectionId);
-        if (message.action === 'loadHistory'){
+        if (message.action === 'loadHistory') {
             await broadcast.loadHistory();
             return;
         }
@@ -76,7 +87,8 @@ var func = module.exports = async function (context, req) {
 // for local test
 var context = {
     res: { body: "" },
-    log: console.log
+    log: console.log,
+    bindingData: {}
 };
 var req = {
     query: {
@@ -89,8 +101,8 @@ var req = {
         group: "_chats_group_group1"
     }
 };
-req.headers = {
-        'x-asrs-connection-id': req.query.connectionId,
-        'x-asrs-user-id': req.query.user
-    };
+context.bindingData.headers = req.headers = {
+    'x-asrs-connection-id': req.query.connectionId,
+    'x-asrs-user-id': req.query.user
+};
 func(context, req);

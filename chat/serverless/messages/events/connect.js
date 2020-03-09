@@ -28,9 +28,11 @@ module.exports = function (context, api, table, user, connectionId) {
             var userGroupQuery = table.query().where("PartitionKey eq '_usergroups_" + user + "'").select('group').top(10);
             var groups = (await table.exec('queryEntities', 'chat', userGroupQuery, null)).entries.map(i => i.group['_']).sort();
 
+            // return back the subprotocol and the user authed
             context.res = {
                 headers: {
-                    'sec-websocket-protocol': 'protocol1'
+                    'sec-websocket-protocol': 'protocol1',
+                    'x-asrs-user-id': user
                 },
                 body: {
                     type: 'connected',

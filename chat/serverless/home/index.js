@@ -8,7 +8,7 @@ module.exports = async function (context, req) {
     var content = fs.readFileSync(contentFile, { encoding: 'utf-8' });
     var name = (req.headers["x-ms-client-principal-name"]) || req.query.name || (req.body && req.body.name);
     if (name) {
-        var html = content.replace('%%%____URL____%%%', webUrl)
+        var html = content.replace('%%%____URL____%%%', webUrl + "?user=" + name)
             .replace(/%%%___user___%%%/g, name);
         context.res = {
             headers: {
