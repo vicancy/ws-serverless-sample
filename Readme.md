@@ -1,6 +1,8 @@
 # Introduction
 This is a simple chat sample, built upon Azure Function and the Serverless WebSocket feature of Azure SignalR Service.
 
+Check the [Live Demo](https://serverless-ws-chat.azurewebsites.net/api/home?code=msSB2Zn5P1VSRITEjQpFotgAuPLWDnvqvT0zcV/hP3uEgBUnMrygfQ==&name=testuser1)
+
 ## Run the Chat sample locally
 
 ### Prerequisites
