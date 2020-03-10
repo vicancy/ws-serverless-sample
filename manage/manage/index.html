@@ -1,0 +1,143 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta name="description"
+        content="Manage Upstream Settings for Azure SignalR Serverless WebSocket">
+    <meta name="author" content="lianwei">
+
+    <title>Manage Upstream Settings for Azure SignalR Serverless WebSocket</title>
+</head>
+
+<body>
+    <div id="app">
+        <div>
+            <h5>To: <span id="endpoint"></span></h5>
+        </div>
+        <div>
+            <h5>Get: <button id="get">Get Upstream Settings</button></h5>
+            
+            <textarea disabled id="getResult" rows="10" style="width: 100%;"></textarea>
+            <div id="logForGet"></div>
+        </div>
+        <hr>
+        <div>
+            <h5>Set: <button id="set">Set Upstream Settings</button></h5>
+            <textarea id="toSet" rows="13" style="width: 100%;"></textarea>
+            <h5>Set's Sample body</h5>
+            <textarea disabled rows="10" style="width: 100%;">
+{
+    "templates": [
+        {
+            "urlTemplate": "http://samplehost.com/api/messages?event={event}"
+        }
+    ]
+}
+            </textarea>
+        </div>
+        <div id="log"></div>
+    </div>
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/axios@0.18.0/dist/axios.min.js"></script>
+    <script type="text/javascript"
+        src="https://cdnjs.cloudflare.com/ajax/libs/jsrsasign/8.0.12/jsrsasign-all-min.js"></script>
+
+    <script type="text/javascript">
+        function parseConnectionString(conn) {
+            const endpoint = /Endpoint=(.*?);/g.exec(conn)?.pop();
+            const key = /AccessKey=(.*?);/g.exec(conn)?.pop();
+            if (!endpoint || !key) return null;
+            const port = /Port=(.*?);/g.exec(conn)?.pop();
+            var url = new URL(endpoint);
+            url.port = port || '';
+            const host = url.toString();
+            url.port = '';
+            const audience = url.toString();
+            const path = 'manage/v1/ws/upstream';
+            const upstreamUrl = host + path;
+            const upstreamAudience = audience + path;
+            return {
+                url: upstreamUrl,
+                audience: upstreamAudience,
+                key: key
+            };
+        }
+
+        var getToken = function (setting) {
+            if (!setting) return null;
+            var date = new Date();
+            var iat = Math.round(date.getTime() / 1000); // seconds since Linux epoch
+            var exp = iat + 3600; // l hour later = 3600 seconds
+            var token = KJUR.jws.JWS.sign(null, { alg: "HS256", typ: "JWT" }, {
+                aud: setting.audience,
+                exp: exp,
+                iat: iat
+            }, setting.key);
+            return "Bearer " + token;
+        }
+
+        var parsed = null;
+        document.addEventListener('DOMContentLoaded', function () {
+            var promptMessage = 'Enter your ConnectionString:';
+            var conn = 'Endpoint=http://localhost;Port=8080;AccessKey=ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789ABCDEFGH;Version=1.0';
+            do {
+                conn = prompt(promptMessage, conn);
+                parsed = parseConnectionString(conn);
+                if (!parsed) {
+                    conn = '';
+                    promptMessage = 'Invalid value. Enter your ConnectionString:';
+                }
+            } while (!parsed);
+
+            document.getElementById("endpoint").innerText = parsed.url;
+
+            var log = document.getElementById('log');
+            var path = parsed.url;
+            document.getElementById('set').addEventListener('click', function (event) {
+                var toSet = document.getElementById('toSet').value;
+                var model = { templates: [] };
+                if (!toSet.trim()) { 
+                    log.innerText = "Invalid content to post.";
+                    return;
+                }
+                var toPost = JSON.parse(toSet);
+                if (toPost.templates && Array.isArray(toPost.templates) && toPost.templates.length > 0) {
+                    for (const i in toPost.templates) {
+                        var t = toPost.templates[i];
+                        var template = {};
+                        if (t.hubPattern !== undefined) {
+                            template.hubPattern = t.hubPattern;
+                        }
+                        if (t.categoryPattern !== undefined) {
+                            template.categoryPattern = t.categoryPattern;
+                        }
+                        if (t.eventPattern !== undefined) {
+                            template.eventPattern = t.eventPattern;
+                        }
+                        if (t.urlTemplate !== undefined) {
+                            template.urlTemplate = t.urlTemplate;
+                        }
+                        model.templates.push(template);
+                    }
+                    log.innerText = "Setting upstream: " + JSON.stringify(model);
+                } else {
+                    log.innerText = "Invalid content to post";
+                    return;
+                }
+
+                axios.post(path, model, { headers: { 'Authorization': getToken(parsed) } }).then(r => {
+                    log.innerText = "Response: " + r.status;
+                });
+                event.preventDefault();
+            });
+            document.getElementById('get').addEventListener('click', function (event) {
+                axios.get(path, { headers: { 'Authorization': getToken(parsed) } }).then(r => {
+                    logForGet.innerText = r.status;
+                    getResult.innerText = JSON.stringify(r.data);
+                });
+                event.preventDefault();
+            });
+        });
+    </script>
+</body>
