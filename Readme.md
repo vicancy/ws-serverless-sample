@@ -31,12 +31,12 @@ With this Private Preview version, we provide a REST API endpoint for you to set
 We provide a simple web app https://ws-manage.azurewebsites.net/api/manage deployed for you to easily get and set the current Upstream settings of the service, with source code in this repo [manage](./manage/manage/).
 
 Put following into the Set Upstream text area to set the Upstream settings for the service.
-```
+```json
 {
-	"templates": [
-		{
-            "urlTemplate": "http://(id).ngrok.io/api/messages?event={event}"
-		}
+    "templates": [
+	{
+        "urlTemplate": "http://(id).ngrok.io/api/messages?event={event}"
+	}
     ]
 }
 ```
