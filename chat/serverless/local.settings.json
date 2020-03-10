@@ -3,7 +3,6 @@
   "Values": {
     "AzureSignalREndpoint": "http://localhost:8080",
     "AzureSignalRAccessKey": "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789ABCDEFGH",
-    "AzureSignalRUpstreamUrl": "http://localhost:7071/api/messages?event={event}",
     "FUNCTIONS_WORKER_RUNTIME": "node",
     "AzureWebJobsStorage": "UseDevelopmentStorage=true"
   },

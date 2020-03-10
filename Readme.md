@@ -1,28 +1,57 @@
 # Introduction
-This is a simple chat sample, built upon Azure Function and the Raw WebSocket feature of Azure SignalR Service.
+This is a simple chat sample, built upon Azure Function and the Serverless WebSocket feature of Azure SignalR Service.
 
-## Run the Chat
+- [Prerequisites](#prerequisites)
+- [Initialize the function app](#initialize-function-app)
+- [Deploy and run function app on Azure](#deploy-to-azure)
+- [Enable authentication on Azure](#enable-authentication)
+- [Build the sample locally](#build-locally)
 
-### Deploy the Chat
-### Set the config
-### Set the Upstreams for the Service
+## Run the Chat sample locally
 
-```http
-GET http://localhost:8080/manage/v1/ws/upstream
+### Prerequisites
+The following are required to run the Chat sample locally
+* [Node.js](https://nodejs.org/en/download/) (Version 10.x, required for JavaScript sample)
+* [Visual Studio Code](https://code.visualstudio.com/) as the Function's IDE
+* [Azure Functions Extension](https://marketplace.visualstudio.com/items?itemName=ms-azuretools.vscode-azurefunctions) inside Visual Studio Code
+* [ngrok](https://ngrok.com/) to expose local port to public
+
+###  Configure application settings
+When running and debugging the Azure Functions runtime locally, application settings are read from **local.settings.json**. Also, you can upload these settings to remote when you try to deploy Function App to Azure. Inside `local.settings.json`, replace the value of `AzureSignalREndpoint` and `AzureSignalRAccessKey` with the value from your ConnectionString of the Azure SignalR, the value of `Endpoint=` and `AccessKey=` respectively.
+
+### Run the Function locally
+Open the folder [./chat/serverless] in VS Code, it contains a Function App host config so that with when press F5, the Azure Function extension detects the config and starts to run both `home` and `messages` Http Functions. The `home` Function `http://localhost:7071/api/home` is which to return the hosted web app, and the `messages` Function `http://localhost:7071/api/messages` is the Upstream we expect the Azure SignalR will invoke on every event. So next step is to expose this local port so that Azure SignalR is able to reach it. [ngrok](https://ngrok.com/) helps us to achieve this.
+
+Inside the `ngrok` folder, type:
+```
+ngrok http 7071
 ```
 
-```json
-POST http://localhost:8080/manage/v1/ws/upstream
+From now on, **ngrok** forwards every request to `http://(id).ngrok.io` to `http://localhost:7071`. 
+
+### Set the Upstreams for the Service
+Now it is time to config the Upstream URL pattern inside Azure SignalR Service.
+
+With this Private Preview version, we provide a REST API endpoint for you to set and get the Upstream settings of the Service. Please note that, later on, this endpoint will be **removed** when we support setting the Upstream from portal and Azure CLI.
+
+We provide a simple web app https://ws-manage.azurewebsites.net/api/manage deployed for you to easily get and set the current Upstream settings of the service, with source code in this repo [manage](./manage/manage/).
+
+Put following into the Set Upstream text area to set the Upstream settings for the service.
+```
 {
 	"templates": [
 		{
-			
-            "urlTemplate": "http://localhost:7071/api/messages?event={event}"
+            "urlTemplate": "http://(id).ngrok.io/api/messages?event={event}"
 		}
     ]
 }
 ```
 
+### Run the chat
+Now visit `http://localhost:7071/api/home?name=yourname` and you are ready to chat locally.
+
+
+## Go through the demo code
 There are two Functions inside this repo:
 1. [The Function hosting the Chat's static webpage](./chat/serverless/home)
 3. [The Function handling WebSocket requests](./chat/serverless/messages)
