@@ -1,9 +1,8 @@
 {
   "IsEncrypted": false,
   "Values": {
-    "AzureSignalRConnectionString": "Endpoint=http://localhost;AccessKey=ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789ABCDEFGH;Port=8080;Version=1.0;",
-    "WebsiteUrl": "http://localhost:7071",
-    "UpstreamUrl": "http://localhost:7071/api/messages?event={event}",
+    "AzureSignalREndpoint": "http://localhost:8080",
+    "AzureSignalRAccessKey": "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789ABCDEFGH",
     "FUNCTIONS_WORKER_RUNTIME": "node",
     "AzureWebJobsStorage": "UseDevelopmentStorage=true"
   },
