@@ -1,12 +1,6 @@
 # Introduction
 This is a simple chat sample, built upon Azure Function and the Serverless WebSocket feature of Azure SignalR Service.
 
-- [Prerequisites](#prerequisites)
-- [Initialize the function app](#initialize-function-app)
-- [Deploy and run function app on Azure](#deploy-to-azure)
-- [Enable authentication on Azure](#enable-authentication)
-- [Build the sample locally](#build-locally)
-
 ## Run the Chat sample locally
 
 ### Prerequisites
@@ -16,7 +10,7 @@ The following are required to run the Chat sample locally
 * [Azure Functions Extension](https://marketplace.visualstudio.com/items?itemName=ms-azuretools.vscode-azurefunctions) inside Visual Studio Code
 * [ngrok](https://ngrok.com/) to expose local port to public
 
-###  Configure application settings
+### Configure application settings
 When running and debugging the Azure Functions runtime locally, application settings are read from **local.settings.json**. Also, you can upload these settings to remote when you try to deploy Function App to Azure. Inside `local.settings.json`, replace the value of `AzureSignalREndpoint` and `AzureSignalRAccessKey` with the value from your ConnectionString of the Azure SignalR, the value of `Endpoint=` and `AccessKey=` respectively.
 
 ### Run the Function locally
