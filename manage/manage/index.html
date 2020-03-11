@@ -27,11 +27,27 @@
             <h5>Set: <button id="set">Set Upstream Settings</button></h5>
             <textarea id="toSet" rows="13" style="width: 100%;"></textarea>
             <h5>Set's Sample body</h5>
-            <textarea disabled rows="10" style="width: 100%;">
+            <pre>There are 3 kind of pattern syntax supported. Take the `eventPattern` for example:
+    1. "*", it to matches any event name
+    2. Combine multiple events with `,`, for example "connect,disconnect", it matches event "connect" and "disconnect"
+    3. The single event name, for example, "connect", it matches "connect".
+For `urlTemplate`, there are 3 parameters `{event}` `{category}` and `{hub}` that can be evaluated for each event for each client request.
+The order matters for multiple templates, the service chooses the first `urlTemplate` with patterns matching the request.
+            </pre>
+            <textarea disabled rows="17" style="width: 100%;">
 {
     "templates": [
         {
-            "urlTemplate": "http://samplehost.com/api/messages?event={event}"
+            "hubPattern": "chat",
+            "eventPattern": "*",
+            "categoryPattern": "*",
+            "urlTemplate": "http://samplehost2.com/api/messages?event={event}&hub={hub}"
+        },
+        {
+            "hubPattern": "hub1,hub2",
+            "eventPattern": "message",
+            "categoryPattern": "*",
+            "urlTemplate": "http://samplehost1.com/api/messages/{hub}/{event}"
         }
     ]
 }
@@ -134,7 +150,7 @@
             document.getElementById('get').addEventListener('click', function (event) {
                 axios.get(path, { headers: { 'Authorization': getToken(parsed) } }).then(r => {
                     logForGet.innerText = r.status;
-                    getResult.innerText = JSON.stringify(r.data);
+                    getResult.value = JSON.stringify(r.data, null, '\t');
                 });
                 event.preventDefault();
             });
